@@ -28,7 +28,7 @@ def schelling_draw(agent):
 model_params = {
     "height": mesa.visualization.Slider("Grid height", 100, 10, 100, 10),
     "width": mesa.visualization.Slider("Grid width", 100, 10, 100, 10),
-    "density": mesa.visualization.Slider("Agent density", 0.8, 0.1, 1.0, 0.05),
+    "density": mesa.visualization.Slider("Agent density", 0.95, 0.1, 1.0, 0.01),
     #"minority_pc": mesa.visualization.Slider("Fraction minority", 0.2, 0.00, 1.0, 0.05),
     "homophily": mesa.visualization.Slider("Homophily", 3, 0, 8, 1),
 }
