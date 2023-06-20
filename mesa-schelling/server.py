@@ -17,7 +17,7 @@ def schelling_draw(agent):
     if agent is None:
         return
     portrayal = {"Shape": "circle", "r": 0.6, "Filled": "true", "Layer": 0}
-    colors = ["#FF0000", "#0000FF", "#FFA500", "#FF00FF", "#00FFFF", "#FFFF00", "#800080", "#008000", "#FFC0CB"]
+    colors = ["#FF0000", "#0000FF", "#00FF00", "#FFA500", "#FF00FF", "#00FFFF", "#FFFF00", "#800080", "#008000", "#FFC0CB"]
 
     num_colors = len(colors)
     agent_type = agent.type % num_colors
