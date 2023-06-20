@@ -45,14 +45,17 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, width=20, height=20, density=0.8, minority_pc=0.2, homophily=3):
+    def __init__(self, width=20, height=20, density=0.8, pop_1=0.25, pop_2=0.25,
+                 pop_3=0.25, homophily=3):
         """ """
 
         # Set parameters
         self.width = width
         self.height = height
         self.density = density
-        self.minority_pc = minority_pc
+        self.pop_1 = pop_1
+        self.pop_2 = pop_2
+        self.pop_3 = pop_3
         self.homophily = homophily
 
         # Set up model objects
@@ -91,10 +94,10 @@ class Schelling(mesa.Model):
             # Place an agent nased on the density
             if self.random.random() < self.density:
                 # Determine if the agent is a minority
-                if self.random.random() < self.minority_pc:
-                    agent_type = 1
-                else:
-                    agent_type = 0
+                agent_type = self.random.choices(
+                    population=[0, 1, 2, 3],
+                    weights=[self.pop_1, self.pop_2, self.pop_3, 
+                             1-self.pop_1-self.pop_2-self.pop_3],)[0]
 
                 # Create a new agent
                 agent = SchellingAgent((x, y), self, agent_type)

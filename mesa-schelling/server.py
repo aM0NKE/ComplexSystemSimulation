@@ -16,21 +16,27 @@ def schelling_draw(agent):
     """
     if agent is None:
         return
-    portrayal = {"Shape": "circle", "r": 0.5, "Filled": "true", "Layer": 0}
+    portrayal = {"Shape": "circle", "r": 0.6, "Filled": "true", "Layer": 0}
 
     if agent.type == 0:
-        portrayal["Color"] = ["#FF0000", "#FF9999"]
-        portrayal["stroke_color"] = "#00FF00"
-    else:
-        portrayal["Color"] = ["#0000FF", "#9999FF"]
-        portrayal["stroke_color"] = "#000000"
+        portrayal["Color"] = "#FF0C00" # Red
+        #portrayal["stroke_color"] = "#000000"
+    elif agent.type == 1:
+        portrayal["Color"] = "#1B00FF" # Blue
+        #portrayal["stroke_color"] = "#000000"
+    elif agent.type == 2:
+        portrayal["Color"] = "#00CB28" # Green
+        #portrayal["stroke_color"] = "#000000"
+    elif agent.type == 3:
+        portrayal["Color"] = "#FF80DE" # Pink
+        #portrayal["stroke_color"] = "#000000"
     return portrayal
 
 model_params = {
     "height": mesa.visualization.Slider("Grid height", 20, 10, 100, 10),
     "width": mesa.visualization.Slider("Grid width", 20, 10, 100, 10),
     "density": mesa.visualization.Slider("Agent density", 0.8, 0.1, 1.0, 0.1),
-    "minority_pc": mesa.visualization.Slider("Fraction minority", 0.2, 0.00, 1.0, 0.05),
+    #"minority_pc": mesa.visualization.Slider("Fraction minority", 0.2, 0.00, 1.0, 0.05),
     "homophily": mesa.visualization.Slider("Homophily", 3, 0, 8, 1),
 }
 
