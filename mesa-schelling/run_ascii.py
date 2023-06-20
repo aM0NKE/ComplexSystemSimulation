@@ -1,5 +1,4 @@
 import mesa
-# print(mesa.__version__)
 
 from model import Schelling
 
@@ -28,6 +27,8 @@ class SchellingTextVisualization(mesa.visualization.TextVisualization):
             return "O"
         if a.type == 1:
             return "X"
+        if a.type == -1: # Fixed objects
+            return "■"
 
 
 if __name__ == "__main__":
@@ -37,7 +38,12 @@ if __name__ == "__main__":
         # Agent density, from 0.8 to 1.0
         "density": 0.8,
         # Fraction minority, from 0.2 to 1.0
-        "minority_pc": 0.2,
+        # "minority_pc": 0.2,
+        # Fixed area density from 0.0 to 0.2
+        "fixed_areas_pc": 0.1,
+        # Number of population groups, from 2 to 4
+        "N": 2,
+        "pop_weights":[0.8, 0.2],
         # Homophily, from 3 to 8
         "homophily": 3,
     }

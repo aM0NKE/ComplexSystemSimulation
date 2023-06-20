@@ -1,4 +1,5 @@
 import mesa
+import random
 
 class SchellingAgent(mesa.Agent):
     """
@@ -37,7 +38,8 @@ class SchellingAgent(mesa.Agent):
             self.model.happy += 1
 
     def step(self):
-        self.move()
+        if self.type != -1: # Don't move fixed objects
+            self.move()
 
 
 class Schelling(mesa.Model):
@@ -45,7 +47,7 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, width=100, height=100, density=0.8, N=4, pop_weights=[0.6, 0.2, 0.1, 0.1], homophily=3):
+    def __init__(self, width=100, height=100, density=0.8, fixed_areas_pc=.1, N=4, pop_weights=[0.6, 0.2, 0.1, 0.1], homophily=3):
         """ """
 
         # Set parameters
@@ -72,8 +74,78 @@ class Schelling(mesa.Model):
         # Variable to halt model
         self.running = True
 
+        # Add fixed cells
+        self.fixed_cells = []
+        self.add_fixed_cells(fixed_areas_pc)
+
         # Set up agents
         self.setup_agents()
+
+    def add_fixed_cells(self, fixed_areas_pc):
+        """
+        Adds fixed cells to the grid by randomly creating clusters of fixed cells and placing them on the grid.
+
+        Args:
+            fixed_areas_pc: Proportion of fixed cells in the grid.
+
+        Note: Fixed cells are represented as an agent of type -1.
+        """
+
+        num_fixed_cells = int(fixed_areas_pc * self.width * self.height)
+
+        # Generate clusters of fixed cells
+        cluster_centers = self.generate_cluster_centers(num_fixed_cells)
+
+        for center in cluster_centers:
+            # Generate a cluster of fixed cells around the center
+            cluster = self.generate_cluster(center)
+
+            for cell in cluster:
+                if cell in [agent.pos for agent in self.fixed_cells]:
+                    continue
+
+                # Create a new fixed cell agent
+                agent = SchellingAgent(cell, self, -1)
+
+                # Add the agent to the grid
+                self.grid.place_agent(agent, cell)
+                self.fixed_cells.append(agent)
+
+    def generate_cluster_centers(self, num_centers):
+        """
+        Generates random cluster centers.
+
+        Args:
+            num_centers: Number of cluster centers to generate.
+
+        Returns:
+            List of cluster center coordinates.
+        """
+
+        cluster_centers = []
+        for _ in range(num_centers):
+            x = self.random.randrange(self.width)
+            y = self.random.randrange(self.height)
+            cluster_centers.append((x, y))
+        return cluster_centers
+
+    def generate_cluster(self, center):
+        """
+        Generates a cluster of cells around the specified center.
+
+        Args:
+            center: Center coordinates of the cluster.
+
+        Returns:
+            List of cell coordinates in the cluster.
+        """
+        cluster_size = int(self.random.gauss(4, 1))
+        cluster_size = max(cluster_size, 1)
+
+        neighbors = self.grid.get_neighborhood(center, True, True)
+        cluster = random.sample(neighbors, min(cluster_size, len(neighbors)))
+        return cluster
+
 
     def setup_agents(self):
         """
@@ -105,8 +177,12 @@ class Schelling(mesa.Model):
         for cell in self.grid.coord_iter():
             x = cell[1]
             y = cell[2]
+
+            # Check if the cell is already occupied by a fixed object
+            if (x, y) in [agent.pos for agent in self.fixed_cells]:
+                continue
             
-            # Place an agent nased on the density
+            # Place an agent based on the density
             if self.random.random() < self.density:
                 # Determine if the agent is a minority
                 agent_type = self.random.choices(
