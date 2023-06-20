@@ -45,7 +45,7 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, width=100, height=100, density=0.8, N=4, pop_weights=[0.6, 0.2, 0.1, 0.1], homophily=3):
+    def __init__(self, width=100, height=100, density=0.8, N=2, pop_weights=[0.5, 0.5], homophily=3):
         """ """
 
         # Set parameters
@@ -92,7 +92,7 @@ class Schelling(mesa.Model):
         if len(self.pop_weights) != self.N:
             raise ValueError("Number of population fractions must match the number of populations.")
         
-        # Check if fractions add to 1
+        # Check if population fractions add up to 1
         if round(sum(self.pop_weights), 4) != 1.0:
             raise ValueError("The population fractions do not add up to 1")
         
