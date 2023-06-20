@@ -45,17 +45,15 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, width=20, height=20, density=0.8, pop_1=0.25, pop_2=0.25,
-                 pop_3=0.25, homophily=3):
+    def __init__(self, width=100, height=100, density=0.8, N=9, pop_weights=[0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1], homophily=3):
         """ """
 
         # Set parameters
         self.width = width
         self.height = height
         self.density = density
-        self.pop_1 = pop_1
-        self.pop_2 = pop_2
-        self.pop_3 = pop_3
+        self.N = N
+        self.pop_weights = pop_weights
         self.homophily = homophily
 
         # Set up model objects
@@ -86,6 +84,23 @@ class Schelling(mesa.Model):
               its contents. (coord_iter)
         """
         
+        # Check if population fractions are provided
+        if self.pop_weights is None:
+            raise ValueError("Population fractions must be specified.")
+
+        # Check if the number of population fractions matches the number of populations
+        if len(self.pop_weights) != self.N:
+            raise ValueError("Number of population fractions must match the number of populations.")
+        
+        # Check if fractions add to 1
+        if round(sum(self.pop_weights), 4) != 1.0:
+            raise ValueError("The population fractions do not add up to 1")
+        
+        # Loop over the population fractions and validate the values
+        for weight in self.pop_weights:
+            if weight < 0 or weight > 1:
+                raise ValueError("Population fractions must be between 0 and 1.")
+
         # Loop over each cell in the grid
         for cell in self.grid.coord_iter():
             x = cell[1]
@@ -95,9 +110,8 @@ class Schelling(mesa.Model):
             if self.random.random() < self.density:
                 # Determine if the agent is a minority
                 agent_type = self.random.choices(
-                    population=[0, 1, 2, 3],
-                    weights=[self.pop_1, self.pop_2, self.pop_3, 
-                             1-self.pop_1-self.pop_2-self.pop_3],)[0]
+                    population=range(self.N),
+                    weights=self.pop_weights,)[0]
 
                 # Create a new agent
                 agent = SchellingAgent((x, y), self, agent_type)

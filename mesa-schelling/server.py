@@ -18,18 +18,25 @@ def schelling_draw(agent):
         return
     portrayal = {"Shape": "circle", "r": 0.6, "Filled": "true", "Layer": 0}
 
-    if agent.type == 0:
-        portrayal["Color"] = "#FF0C00" # Red
-        #portrayal["stroke_color"] = "#000000"
-    elif agent.type == 1:
-        portrayal["Color"] = "#1B00FF" # Blue
-        #portrayal["stroke_color"] = "#000000"
-    elif agent.type == 2:
-        portrayal["Color"] = "#00CB28" # Green
-        #portrayal["stroke_color"] = "#000000"
-    elif agent.type == 3:
-        portrayal["Color"] = "#FF80DE" # Pink
-        #portrayal["stroke_color"] = "#000000"
+    # colors = ["#FF0C00",  "#1B00FF",  "#00CB28", "#FF80DE"]
+    # if agent.type == 0:
+    #     portrayal["Color"] = "#FF0C00" # Red
+    #     #portrayal["stroke_color"] = "#000000"
+    # elif agent.type == 1:
+    #     portrayal["Color"] = "#1B00FF" # Blue
+    #     #portrayal["stroke_color"] = "#000000"
+    # elif agent.type == 2:
+    #     portrayal["Color"] = "#00CB28" # Green
+    #     #portrayal["stroke_color"] = "#000000"
+    # elif agent.type == 3:
+    #     portrayal["Color"] = "#FF80DE" # Pink
+    #     #portrayal["stroke_color"] = "#000000"
+    colors = ["#FF0000", "#00FF00", "#0000FF", "#FFA500", "#FF00FF", "#00FFFF", "#FFFF00", "#800080", "#008000", "#FFC0CB"]
+
+    num_colors = len(colors)
+    agent_type = agent.type % num_colors
+    portrayal["Color"] = colors[agent_type]
+
     return portrayal
 
 model_params = {
