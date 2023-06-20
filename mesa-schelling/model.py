@@ -45,7 +45,7 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, width=100, height=100, density=0.8, N=9, pop_weights=[0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1], homophily=3):
+    def __init__(self, width=100, height=100, density=0.8, N=4, pop_weights=[0.6, 0.2, 0.1, 0.1], homophily=3):
         """ """
 
         # Set parameters
