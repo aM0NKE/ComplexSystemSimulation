@@ -1,5 +1,7 @@
 import mesa
 import random
+import numpy as np
+import scipy as sp
 
 class SchellingAgent(mesa.Agent):
     """
@@ -64,8 +66,12 @@ class Schelling(mesa.Model):
 
         # Set up model statistics
         self.happy = 0
+        self.cluster_sizes = {}
+        self.cluster_data = {}
         self.datacollector = mesa.DataCollector(
             {"happy": "happy"},  # Model-level count of happy agents
+            # {"cluster_sizes": "cluster_sizes"}, # Dictonary of cluster sizes
+            # {"cluster_data": "cluster_data"}, # Dictonary of cluster data
             # For testing purposes, agent's individual x and y
             {"x": lambda a: a.pos[0], "y": lambda a: a.pos[1]},
         )
@@ -196,6 +202,81 @@ class Schelling(mesa.Model):
                 # Add the agent to the scheduler
                 self.schedule.add(agent)
 
+    def mesa_grid_to_numpy_grid(self):
+        # Convert the grid to a NumPy array
+        array = np.zeros((self.grid.width, self.grid.height), dtype=int)
+        for cell in self.grid.coord_iter():
+            _, x, y = cell
+            if len(self.grid.get_cell_list_contents((x, y))) != 0:
+                agent = self.grid.get_cell_list_contents((x, y))[0]  # Assuming only one agent per cell
+                array[x, y] = agent.type
+        return array
+    
+    def cluster_finder(self, mask):
+        """This function has as imput a binary matrix of one population group
+        and returns the size of cluster(s).
+
+        Args:
+            mask (2D numpy array): Matrix of intergers where 0 is not part of a cluster
+            and 1 is part of a cluster.
+
+        Returns:
+            cluster: an array of clusters sizes for a input population group (mask)
+        """
+        # Labels the clusters
+        lw, _ = sp.ndimage.label(mask)
+
+        # sums the agents that are part of a cluster
+        clusters = sp.ndimage.sum(mask, lw, index=np.arange(lw.max() + 1))
+        return clusters[1:]
+
+    def find_cluster_sizes(self, array):
+        """This function finds all the cluster size(s) for all the populations on the 2D grid.
+
+        Args:
+            array (2D numpy array): Matrix of intergers where 0 is the empty space
+                                    and the other intergers a population agent.
+
+        Returns:
+            cluster_sizes (dictonary): The keys are the population value (population group)
+                                    and the values is an array of cluster size(s).
+        """
+        unique_values = np.unique(array)
+        cluster_sizes = {}
+
+        for value in unique_values:
+            # value 0 is an empty space thus not part of the cluster.
+            if value >= 0:
+                # Isolate the selected population group form the rest (makt it a binary matrix)
+                mask = array == value
+                # find the cluster size(s) for the selected population group.
+                cluster_sizes[value] = self.cluster_finder(mask)
+        return cluster_sizes
+
+    def cluster_analysis(self, cluster_sizes):
+        """This function calculates the number of clusters, mean cluster size 
+        with standard deviation.
+
+        Args:
+            cluster_sizes (dictonary): The keys are the population value (population group)
+                                    and the values is an array of cluster size(s).
+
+        Returns:
+            cluster_data (dictonary): The keys are the population value (population group)
+                                    and the values is an array of number of clusters,
+                                    mean cluster size and standard deviation.
+        """
+        cluster_data = {}
+        for value in cluster_sizes.keys():
+            cluster_data[value] = [len(cluster_sizes[value]), np.mean(cluster_sizes[value]),
+                                    np.std(cluster_sizes[value])]
+        return cluster_data
+    
+    def calculate_cluster_sizes(self):
+        array = self.mesa_grid_to_numpy_grid()
+        self.cluster_sizes = self.find_cluster_sizes(array)
+        self.cluster_data = self.cluster_analysis(self.cluster_sizes)
+        
     def step(self):
         """
         Run one step of the model. If All agents are happy, halt the model.
@@ -203,11 +284,12 @@ class Schelling(mesa.Model):
 
         # Reset counter of happy agents
         self.happy = 0
-
+        
         # Advance each agent by one step
         self.schedule.step()
 
         # Collect data
+        self.calculate_cluster_sizes()
         self.datacollector.collect(self)
 
         # Halt if no unhappy agents

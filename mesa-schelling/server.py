@@ -10,6 +10,12 @@ def get_happy_agents(model):
     
     return f"Happy agents: {model.happy}"
 
+def get_cluster_info(model):
+    """
+    Display a text count of how many happy agents there are.
+    """
+    
+    return f"Cluster summary: {model.cluster_data}"
 
 def schelling_draw(agent):
     """
@@ -55,7 +61,7 @@ model_params = {
     "height": mesa.visualization.Slider("Grid height", 100, 10, 100, 10),
     "width": mesa.visualization.Slider("Grid width", 100, 10, 100, 10),
     "density": mesa.visualization.Slider("Agent density", 0.95, 0.1, 1.0, 0.01),
-    "fixed_areas_pc": mesa.visualization.Slider("Fixed area density", 0.1, 0.0, 0.2, 0.025),
+    "fixed_areas_pc": mesa.visualization.Slider("Fixed area density", 0.0, 0.0, 0.2, 0.025),
     #"minority_pc": mesa.visualization.Slider("Fraction minority", 0.2, 0.00, 1.0, 0.05),
     "homophily": mesa.visualization.Slider("Homophily", 3, 0, 8, 1),
 }
@@ -66,7 +72,7 @@ happy_chart = mesa.visualization.ChartModule([{"Label": "happy", "Color": "Black
 
 server = mesa.visualization.ModularServer(
     Schelling,
-    [canvas_element, get_happy_agents, happy_chart],
+    [canvas_element, get_happy_agents, happy_chart, get_cluster_info],
     "Schelling",
     model_params,
 )
