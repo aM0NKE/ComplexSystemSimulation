@@ -68,8 +68,11 @@ class Schelling(mesa.Model):
         self.happy = 0
         self.cluster_sizes = {}
         self.cluster_data = {}
+        self.total_cluster_average = 0.0
+
         self.datacollector = mesa.DataCollector(
             {"happy": "happy"},  # Model-level count of happy agents
+            # {"total_cluster_average": "total_cluster_average"},  # Model-level total average cluster size
             # {"cluster_sizes": "cluster_sizes"}, # Dictonary of cluster sizes
             # {"cluster_data": "cluster_data"}, # Dictonary of cluster data
             # For testing purposes, agent's individual x and y
@@ -272,10 +275,17 @@ class Schelling(mesa.Model):
                                     np.std(cluster_sizes[value])]
         return cluster_data
     
+    def average_cluster_size_system(self, cluster_sizes):
+        cluster_average = 0
+        for value in cluster_sizes.keys():
+            cluster_average += np.mean(cluster_sizes[value])
+        return cluster_average / len(cluster_sizes)
+    
     def calculate_cluster_sizes(self):
         array = self.mesa_grid_to_numpy_grid()
         self.cluster_sizes = self.find_cluster_sizes(array)
         self.cluster_data = self.cluster_analysis(self.cluster_sizes)
+        self.total_cluster_average = self.average_cluster_size_system(self.cluster_sizes)
         
     def step(self):
         """

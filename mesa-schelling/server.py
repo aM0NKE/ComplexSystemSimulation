@@ -15,7 +15,7 @@ def get_cluster_info(model):
     Display a text count of how many happy agents there are.
     """
     
-    return f"Cluster summary: {model.cluster_data}"
+    return f"Cluster summary: {model.cluster_data}", f"total Cluster summary: {model.total_cluster_average}"
 
 def schelling_draw(agent):
     """
@@ -68,6 +68,8 @@ model_params = {
 
 canvas_element = mesa.visualization.CanvasGrid(schelling_draw, 100, 100, 1000, 1000)
 happy_chart = mesa.visualization.ChartModule([{"Label": "happy", "Color": "Black"}])
+# total_average_cluster_size_chart = mesa.visualization.ChartModule([{"Label": "total_cluster_average", "Color": "Black"}])
+
 
 
 server = mesa.visualization.ModularServer(
