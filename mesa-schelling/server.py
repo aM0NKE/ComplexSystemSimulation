@@ -13,7 +13,7 @@ def get_model_stats(model):
             f"\nHappy distribution: {model.happy_dist}",
             f"\nTotal wealth: {model.total_wealth}",
             f"\nWealth distribution: {model.wealth_dist}",
-            f"\nTotal avg. cluster size: {model.total_cluster_average}",
+            f"\nTotal avg. cluster size: {model.total_avg_cluster_size}",
             f"\nCluster size distribution: {model.cluster_data}"
         )
         
@@ -53,7 +53,7 @@ model_params = {
 canvas_element = mesa.visualization.CanvasGrid(schelling_draw, 100, 100, 1000, 1000)
 happy_chart = mesa.visualization.ChartModule([{"Label": "happy", "Color": "Black"}])
 total_wealth_chart = mesa.visualization.ChartModule([{"Label": "total_wealth", "Color": "Black"}])
-total_cluster_size_chart = mesa.visualization.ChartModule([{"Label": "total_cluster_average", "Color": "Black"}])
+total_cluster_size_chart = mesa.visualization.ChartModule([{"Label": "total_avg_cluster_size", "Color": "Black"}])
 
 # Create the server, and pass the grid and the graph
 server = mesa.visualization.ModularServer(

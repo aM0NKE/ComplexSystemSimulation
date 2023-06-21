@@ -118,7 +118,7 @@ class Schelling(mesa.Model):
         self.happy_dist = {i: 0 for i in range(N)}
         self.total_wealth = 0
         self.wealth_dist = {i: 0 for i in range(N)}
-        self.total_cluster_average = 0.0
+        self.total_avg_cluster_size = 0.0
         self.cluster_sizes = {}
         self.cluster_data = {}
 
@@ -129,7 +129,7 @@ class Schelling(mesa.Model):
                 "total_wealth": "total_wealth", # Model-level count of total wealth
                 "wealth_distribution": lambda m: m.wealth_dist.copy(),
                 "happy_distribution": lambda m: m.happy_dist.copy(),
-                "total_cluster_average": "total_cluster_average",  # Model-level total average cluster size
+                "total_avg_cluster_size": "total_avg_cluster_size",  # Model-level total average cluster size
                 "cluster_sizes": lambda m: m.cluster_sizes.copy(), # Dictonary of cluster sizes
                 "cluster_data": lambda m: m.cluster_data.copy(), # Dictonary of cluster data
                 
@@ -269,8 +269,11 @@ class Schelling(mesa.Model):
                 # Add the agent to the scheduler
                 self.schedule.add(agent)
 
-    def mesa_grid_to_numpy_grid(self):
-        # Convert the grid to a NumPy array
+    def grid2numpy(self):
+        """
+        This function converts the grid to a numpy array.
+        """
+
         array = np.zeros((self.grid.width, self.grid.height), dtype=int)
         for cell in self.grid.coord_iter():
             _, x, y = cell
@@ -280,7 +283,8 @@ class Schelling(mesa.Model):
         return array
     
     def cluster_finder(self, mask):
-        """This function has as imput a binary matrix of one population group
+        """
+        This function has as imput a binary matrix of one population group
         and returns the size of cluster(s).
 
         Args:
@@ -298,7 +302,8 @@ class Schelling(mesa.Model):
         return clusters[1:]
 
     def find_cluster_sizes(self, array):
-        """This function finds all the cluster size(s) for all the populations on the 2D grid.
+        """
+        This function finds all the cluster size(s) for all the populations on the 2D grid.
 
         Args:
             array (2D numpy array): Matrix of intergers where 0 is the empty space
@@ -320,8 +325,9 @@ class Schelling(mesa.Model):
                 cluster_sizes[value] = self.cluster_finder(mask)
         return cluster_sizes
 
-    def cluster_analysis(self, cluster_sizes):
-        """This function calculates the number of clusters, mean cluster size 
+    def cluster_summary(self, cluster_sizes):
+        """
+        This function calculates the number of clusters, mean cluster size 
         with standard deviation.
 
         Args:
@@ -339,17 +345,16 @@ class Schelling(mesa.Model):
                                     np.std(cluster_sizes[value])]
         return cluster_data
     
-    def average_cluster_size_system(self, cluster_sizes):
-        cluster_average = 0
-        for value in cluster_sizes.keys():
-            cluster_average += np.mean(cluster_sizes[value])
-        return cluster_average / len(cluster_sizes)
-    
-    def calculate_cluster_sizes(self):
-        array = self.mesa_grid_to_numpy_grid()
+    def calculate_cluster_stats(self):
+        """
+        Calculates the number of clusters, mean cluster size and standard deviation
+        for each population group. As well as the total average cluster size and 
+        it returns the indivisual cluster sizes.
+        """
+        array = self.grid2numpy()
         self.cluster_sizes = self.find_cluster_sizes(array)
-        self.cluster_data = self.cluster_analysis(self.cluster_sizes)
-        self.total_cluster_average = self.average_cluster_size_system(self.cluster_sizes)
+        self.cluster_data = self.cluster_summary(self.cluster_sizes)
+        self.total_avg_cluster_size = np.mean([np.mean(self.cluster_sizes[value]) for value in self.cluster_sizes.keys()])
 
     def reset_model_stats(self):
         """
@@ -373,7 +378,7 @@ class Schelling(mesa.Model):
         self.schedule.step()
 
         # Collect data
-        self.calculate_cluster_sizes()
+        self.calculate_cluster_stats()
         self.datacollector.collect(self)
 
         # Halt if no unhappy agents
