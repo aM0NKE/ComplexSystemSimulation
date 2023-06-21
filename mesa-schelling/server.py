@@ -3,36 +3,20 @@ import mesa
 from model import Schelling
 
 
-def get_happy_agents(model):
+def get_model_stats(model):
     """
-    Display a text count of how many happy agents there are.
-    """
-    
-    return f"Happy agents: {model.happy}"
-
-def get_cluster_info(model):
-    """
-    Display a text count of how many happy agents there are.
+    Display a text of some general model statistics.
     """
     
-    return f"Cluster summary: {model.cluster_data}", f"total Cluster summary: {model.total_cluster_average}"
-
-def schelling_draw(agent):
-    """
-    Portrayal Method for canvas
-    """
-    if agent is None:
-        return
-    portrayal = {"Shape": "circle", "r": 0.6, "Filled": "true", "Layer": 0}
-    colors = ["#FF0000", "#0000FF", "#00FF00", "#FFA500", "#FF00FF", "#00FFFF", "#FFFF00", "#800080", "#008000", "#FFC0CB"]
-
-    num_colors = len(colors)
-    agent_type = agent.type % num_colors
-    portrayal["Color"] = colors[agent_type]
-
-    return portrayal
-
-
+    return (
+            f"Happy agents: {model.happy}",
+            f"\nHappy distribution: {model.happy_dist}",
+            f"\nTotal wealth: {model.total_wealth}",
+            f"\nWealth distribution: {model.wealth_dist}",
+            f"\nTotal avg. cluster size: {model.total_cluster_average}",
+            f"\nCluster size distribution: {model.cluster_data}"
+        )
+        
 def schelling_draw(agent):
     """
     Portrayal Method for canvas
@@ -53,10 +37,9 @@ def schelling_draw(agent):
         agent_type = agent.type % num_colors
         portrayal["Color"] = colors[agent_type]
 
-
     return portrayal
 
-
+# Define model parameters
 model_params = {
     "height": mesa.visualization.Slider("Grid height", 100, 10, 100, 10),
     "width": mesa.visualization.Slider("Grid width", 100, 10, 100, 10),
@@ -66,15 +49,16 @@ model_params = {
     "homophily": mesa.visualization.Slider("Homophily", 3, 0, 8, 1),
 }
 
+# Define graphic elements
 canvas_element = mesa.visualization.CanvasGrid(schelling_draw, 100, 100, 1000, 1000)
 happy_chart = mesa.visualization.ChartModule([{"Label": "happy", "Color": "Black"}])
-# total_average_cluster_size_chart = mesa.visualization.ChartModule([{"Label": "total_cluster_average", "Color": "Black"}])
+total_wealth_chart = mesa.visualization.ChartModule([{"Label": "total_wealth", "Color": "Black"}])
+total_cluster_size_chart = mesa.visualization.ChartModule([{"Label": "total_cluster_average", "Color": "Black"}])
 
-
-
+# Create the server, and pass the grid and the graph
 server = mesa.visualization.ModularServer(
     Schelling,
-    [canvas_element, get_happy_agents, happy_chart, get_cluster_info],
+    [canvas_element, get_model_stats, total_cluster_size_chart, happy_chart, total_wealth_chart],
     "Schelling",
     model_params,
 )

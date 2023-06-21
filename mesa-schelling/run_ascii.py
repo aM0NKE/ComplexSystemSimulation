@@ -16,7 +16,8 @@ class SchellingTextVisualization(mesa.visualization.TextVisualization):
 
         grid_viz = mesa.visualization.TextGrid(self.model.grid, self.print_ascii_agent)
         happy_viz = mesa.visualization.TextData(self.model, "happy")
-        self.elements = [grid_viz, happy_viz]
+        total_wealth_viz = mesa.visualization.TextData(self.model, "total_wealth")
+        self.elements = [grid_viz, happy_viz, total_wealth_viz]
 
     @staticmethod
     def print_ascii_agent(a):
@@ -29,7 +30,6 @@ class SchellingTextVisualization(mesa.visualization.TextVisualization):
             return "X"
         if a.type == -1: # Fixed objects
             return "■"
-
 
 if __name__ == "__main__":
     model_params = {

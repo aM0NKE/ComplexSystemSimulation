@@ -8,19 +8,55 @@ class SchellingAgent(mesa.Agent):
     Agent class of the Schelling segregation agent.
     """
 
-    def __init__(self, pos, model, agent_type):
+    def __init__(self, pos, model, agent_type, init_wealth):
         """
         Create a new Schelling agent.
 
         Args:
-           unique_id: Unique identifier for the agent.
-           pos (x, y): Agent initial location.
-           model: Model reference. 
-           agent_type: Indicator for the agent's type (minority=1, majority=0)
+            unique_id: Unique identifier for the agent.
+            pos (x, y): Agent initial location.
+            model: Model reference. 
+            agent_type: Indicator for the agent's type (minority=1, majority=0)
+            init_wealth: Initial wealth of the agent.
         """
+
         super().__init__(pos, model)
         self.pos = pos
         self.type = agent_type
+        self.wealth = init_wealth
+
+    def update_wealth(self):
+        """
+        Updates the agent's wealth based on the average wealth of its neighbors.
+        """
+
+        # If an agent has neighbors, update its wealth
+        if len(self.model.grid.get_neighbors(self.pos, True)):
+            # Find agent's neighbors' wealth and count
+            cnt_neighbors = 0
+            wealth_neighbors = 0
+            for neighbor in self.model.grid.iter_neighbors(self.pos, True):
+                # Skip fixed objects
+                if neighbor.type == -1:
+                    continue 
+                cnt_neighbors += 1
+                wealth_neighbors += neighbor.wealth
+            # If an agent has no neighbors, keep its wealth
+            if cnt_neighbors == 0:
+                self.wealth = self.wealth
+            # Else update its wealth according to the average of its neighbors
+            else:
+                self.wealth = (0.5 * self.wealth) + (0.5 * (wealth_neighbors / cnt_neighbors))
+
+        # If an agent has no neighbors, keep its wealth
+        else:
+            self.wealth = self.wealth
+        
+        # Update the model's total wealth
+        self.model.total_wealth += self.wealth
+
+        # Update the wealth distribution
+        self.model.wealth_dist[self.type] += self.wealth
 
     def move(self):
         """
@@ -38,10 +74,12 @@ class SchellingAgent(mesa.Agent):
             self.model.grid.move_to_empty(self)
         else:
             self.model.happy += 1
+            self.model.happy_dist[self.type] += 1
 
     def step(self):
         if self.type != -1: # Don't move fixed objects
             self.move()
+            self.update_wealth()
 
 
 class Schelling(mesa.Model):
@@ -49,13 +87,24 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, width=100, height=100, density=0.8, fixed_areas_pc=.1, N=4, pop_weights=[0.6, 0.2, 0.1, 0.1], homophily=3):
-        """ """
+    def __init__(self, width=100, height=100, density=0.8, fixed_areas_pc=0.0, N=4, pop_weights=[0.6, 0.2, 0.1, 0.1], homophily=3):
+        """ 
+        Initialize the Schelling model.
+
+        Args:
+            width, height: The width and height of the grid.
+            density: The proportion of the grid to be occupied by agents.
+            fixed_areas_pc: The proportion of the grid to be occupied by fixed areas.
+            N: The number of agent types.
+            pop_weights: The proportion of each agent type in the population.
+            homophily: The minimum number of similar neighbors an agent needs to be happy.
+        """
 
         # Set parameters
         self.width = width
         self.height = height
         self.density = density
+        self.fixed_areas_pc = fixed_areas_pc
         self.N = N
         self.pop_weights = pop_weights
         self.homophily = homophily
@@ -66,17 +115,31 @@ class Schelling(mesa.Model):
 
         # Set up model statistics
         self.happy = 0
+        self.happy_dist = {i: 0 for i in range(N)}
+        self.total_wealth = 0
+        self.wealth_dist = {i: 0 for i in range(N)}
+        self.total_cluster_average = 0.0
         self.cluster_sizes = {}
         self.cluster_data = {}
-        self.total_cluster_average = 0.0
 
+        # Define datacollector
         self.datacollector = mesa.DataCollector(
-            {"happy": "happy"},  # Model-level count of happy agents
-            # {"total_cluster_average": "total_cluster_average"},  # Model-level total average cluster size
-            # {"cluster_sizes": "cluster_sizes"}, # Dictonary of cluster sizes
-            # {"cluster_data": "cluster_data"}, # Dictonary of cluster data
-            # For testing purposes, agent's individual x and y
-            {"x": lambda a: a.pos[0], "y": lambda a: a.pos[1]},
+            model_reporters={
+                "happy": "happy", # Model-level count of happy agents
+                "total_wealth": "total_wealth", # Model-level count of total wealth
+                "wealth_distribution": lambda m: m.wealth_dist.copy(),
+                "happy_distribution": lambda m: m.happy_dist.copy(),
+                "total_cluster_average": "total_cluster_average",  # Model-level total average cluster size
+                "cluster_sizes": lambda m: m.cluster_sizes.copy(), # Dictonary of cluster sizes
+                "cluster_data": lambda m: m.cluster_data.copy(), # Dictonary of cluster data
+                
+
+            },
+            agent_reporters={
+                # For testing purposes, agent's individual x and y
+                "x": lambda a: a.pos[0], 
+                "y": lambda a: a.pos[1], 
+            }
         )
         self.datacollector.collect(self)
 
@@ -85,7 +148,8 @@ class Schelling(mesa.Model):
 
         # Add fixed cells
         self.fixed_cells = []
-        self.add_fixed_cells(fixed_areas_pc)
+        if fixed_areas_pc > 0:
+            self.add_fixed_cells(fixed_areas_pc)
 
         # Set up agents
         self.setup_agents()
@@ -114,7 +178,7 @@ class Schelling(mesa.Model):
                     continue
 
                 # Create a new fixed cell agent
-                agent = SchellingAgent(cell, self, -1)
+                agent = SchellingAgent(cell, self, -1, 0)
 
                 # Add the agent to the grid
                 self.grid.place_agent(agent, cell)
@@ -154,7 +218,6 @@ class Schelling(mesa.Model):
         neighbors = self.grid.get_neighborhood(center, True, True)
         cluster = random.sample(neighbors, min(cluster_size, len(neighbors)))
         return cluster
-
 
     def setup_agents(self):
         """
@@ -199,7 +262,8 @@ class Schelling(mesa.Model):
                     weights=self.pop_weights,)[0]
 
                 # Create a new agent
-                agent = SchellingAgent((x, y), self, agent_type)
+                init_wealth = np.random.normal(5, 2)
+                agent = SchellingAgent((x, y), self, agent_type, init_wealth)
                 # Add the agent to the grid
                 self.grid.place_agent(agent, (x, y))
                 # Add the agent to the scheduler
@@ -286,15 +350,25 @@ class Schelling(mesa.Model):
         self.cluster_sizes = self.find_cluster_sizes(array)
         self.cluster_data = self.cluster_analysis(self.cluster_sizes)
         self.total_cluster_average = self.average_cluster_size_system(self.cluster_sizes)
+
+    def reset_model_stats(self):
+        """
+        Resets model statistics.
+        """
+
+        self.happy = 0
+        self.happy_dist = {i: 0 for i in range(self.N)}
+        self.total_wealth = 0
+        self.wealth_dist = {i: 0 for i in range(self.N)}
         
     def step(self):
         """
         Run one step of the model. If All agents are happy, halt the model.
         """
 
-        # Reset counter of happy agents
-        self.happy = 0
-        
+        # Reset model statistics
+        self.reset_model_stats()
+
         # Advance each agent by one step
         self.schedule.step()
 
