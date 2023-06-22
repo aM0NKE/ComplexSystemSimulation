@@ -87,7 +87,7 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, width=100, height=100, density=0.8, fixed_areas_pc=0.0, N=4, pop_weights=[0.6, 0.2, 0.1, 0.1], homophily=3, cluster_threshold = 10):
+    def __init__(self, width=100, height=100, density=0.8, fixed_areas_pc=0.0, pop_weights=[0.6, 0.2, 0.1, 0.1], homophily=3, cluster_threshold = 10):
         """ 
         Initialize the Schelling model.
 
@@ -106,8 +106,8 @@ class Schelling(mesa.Model):
         self.height = height
         self.density = density
         self.fixed_areas_pc = fixed_areas_pc
-        self.N = N
         self.pop_weights = pop_weights
+        self.N = len(pop_weights)
         self.homophily = homophily
         self.cluster_threshold = cluster_threshold
 
@@ -117,9 +117,9 @@ class Schelling(mesa.Model):
 
         # Set up model statistics
         self.happy = 0
-        self.happy_dist = {i: 0 for i in range(N)}
+        self.happy_dist = {i: 0 for i in range(self.N)}
         self.total_wealth = 0
-        self.wealth_dist = {i: 0 for i in range(N)}
+        self.wealth_dist = {i: 0 for i in range(self.N)}
         self.total_avg_cluster_size = 0.0
         self.cluster_sizes = {}
         self.cluster_data = {}
