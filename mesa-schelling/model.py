@@ -39,14 +39,19 @@ class SchellingAgent(mesa.Agent):
                 # Skip fixed objects
                 if neighbor.type == -1:
                     continue 
+
                 cnt_neighbors += 1
                 wealth_neighbors += neighbor.wealth
-            # If an agent has no neighbors, keep its wealth
-            if cnt_neighbors == 0:
+
+            avg_neighbor_wealth = wealth_neighbors / cnt_neighbors
+
+            # If an agent has no neighbors or its wealth is greater than that of 
+            # its neighbors, keep its wealth
+            if cnt_neighbors == 0 or avg_neighbor_wealth < self.wealth:
                 self.wealth = self.wealth
             # Else update its wealth according to the average of its neighbors
-            else:
-                self.wealth = (0.5 * self.wealth) + (0.5 * (wealth_neighbors / cnt_neighbors))
+            elif avg_neighbor_wealth > self.wealth:
+                self.wealth = 0.5 * self.wealth + 0.5 * avg_neighbor_wealth
 
         # If an agent has no neighbors, keep its wealth
         else:
