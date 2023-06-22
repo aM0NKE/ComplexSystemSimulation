@@ -40,12 +40,13 @@ if __name__ == "__main__":
         # Fraction minority, from 0.2 to 1.0
         # "minority_pc": 0.2,
         # Fixed area density from 0.0 to 0.2
-        "fixed_areas_pc": 0.1,
+        "fixed_areas_pc": 0.0,
         # Number of population groups, from 2 to 4
-        "N": 2,
         "pop_weights":[0.8, 0.2],
         # Homophily, from 3 to 8
         "homophily": 3,
+        # Cluster threshold, from 4 to 8
+        "cluster_threshold": 20,
     }
 
     model = Schelling(**model_params)

@@ -269,7 +269,7 @@ class Schelling(mesa.Model):
                     weights=self.pop_weights,)[0]
 
                 # Create a new agent
-                init_wealth = np.random.normal(5, 2)
+                init_wealth = np.random.lognormal(3.0, 1.0) # Lognormal distribution with mean 3 and std 1 (USA)
                 agent = SchellingAgent((x, y), self, agent_type, init_wealth)
                 # Add the agent to the grid
                 self.grid.place_agent(agent, (x, y))
@@ -291,7 +291,7 @@ class Schelling(mesa.Model):
     
     def cluster_finder(self, mask):
         """
-        This function has as imput a binary matrix of one population group
+        This helper function has as imput a binary matrix of one population group
         and returns the size of cluster(s).
 
         Args:
@@ -301,9 +301,10 @@ class Schelling(mesa.Model):
         Returns:
             cluster: an array of clusters sizes for a input population group (mask)
         """
+
         # Labels the clusters
         lw, _ = sp.ndimage.label(mask)
-
+        
         # sums the agents that are part of a cluster
         clusters = sp.ndimage.sum(mask, lw, index=np.arange(lw.max() + 1))
         return clusters[clusters >= self.cluster_threshold]
@@ -320,6 +321,7 @@ class Schelling(mesa.Model):
             cluster_sizes (dictonary): The keys are the population value (population group)
                                     and the values is an array of cluster size(s).
         """
+
         unique_values = np.unique(array)
         cluster_sizes = {}
 
@@ -346,6 +348,7 @@ class Schelling(mesa.Model):
                                     and the values is an array of number of clusters,
                                     mean cluster size and standard deviation.
         """
+
         cluster_data = {}
         for value in cluster_sizes.keys():
             if len(cluster_sizes[value]) != 0:
