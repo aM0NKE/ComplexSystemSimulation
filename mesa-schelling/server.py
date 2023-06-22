@@ -14,7 +14,7 @@ def get_model_stats(model):
             f"\nTotal wealth: {model.total_wealth}",
             f"\nWealth distribution: {model.wealth_dist}",
             f"\nTotal avg. cluster size: {model.total_avg_cluster_size}",
-            f"\nCluster size distribution: {model.cluster_data}"
+            f"\nCluster size data: {model.cluster_data}"
         )
         
 def schelling_draw(agent):
@@ -47,6 +47,7 @@ model_params = {
     "fixed_areas_pc": mesa.visualization.Slider("Fixed area density", 0.0, 0.0, 0.2, 0.025),
     #"minority_pc": mesa.visualization.Slider("Fraction minority", 0.2, 0.00, 1.0, 0.05),
     "homophily": mesa.visualization.Slider("Homophily", 3, 0, 8, 1),
+    "cluster_threshold": mesa.visualization.Slider("cluster_threshold", 10, 1, 100, 1),
 }
 
 # Define graphic elements

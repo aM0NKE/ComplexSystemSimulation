@@ -87,7 +87,7 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, width=100, height=100, density=0.8, fixed_areas_pc=0.0, N=4, pop_weights=[0.6, 0.2, 0.1, 0.1], homophily=3):
+    def __init__(self, width=100, height=100, density=0.8, fixed_areas_pc=0.0, N=4, pop_weights=[0.6, 0.2, 0.1, 0.1], homophily=3, cluster_threshold = 10):
         """ 
         Initialize the Schelling model.
 
@@ -98,6 +98,7 @@ class Schelling(mesa.Model):
             N: The number of agent types.
             pop_weights: The proportion of each agent type in the population.
             homophily: The minimum number of similar neighbors an agent needs to be happy.
+            cluster_threshold: The minimum number of agents together to count as a cluster.
         """
 
         # Set parameters
@@ -108,6 +109,7 @@ class Schelling(mesa.Model):
         self.N = N
         self.pop_weights = pop_weights
         self.homophily = homophily
+        self.cluster_threshold = cluster_threshold
 
         # Set up model objects
         self.schedule = mesa.time.RandomActivation(self)
@@ -299,7 +301,7 @@ class Schelling(mesa.Model):
 
         # sums the agents that are part of a cluster
         clusters = sp.ndimage.sum(mask, lw, index=np.arange(lw.max() + 1))
-        return clusters[1:]
+        return clusters[clusters >= self.cluster_threshold]
 
     def find_cluster_sizes(self, array):
         """
@@ -341,8 +343,11 @@ class Schelling(mesa.Model):
         """
         cluster_data = {}
         for value in cluster_sizes.keys():
-            cluster_data[value] = [len(cluster_sizes[value]), np.mean(cluster_sizes[value]),
-                                    np.std(cluster_sizes[value])]
+            if len(cluster_sizes[value]) != 0:
+                cluster_data[value] = [len(cluster_sizes[value]), np.mean(cluster_sizes[value]),
+                                        np.std(cluster_sizes[value])]
+            else:
+                cluster_data[value] = [0, 0, 0]
         return cluster_data
     
     def calculate_cluster_stats(self):
