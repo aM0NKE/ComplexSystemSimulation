@@ -14,7 +14,8 @@ def get_model_stats(model):
             f"\nTotal wealth: {model.total_wealth}",
             f"\nWealth distribution: {model.wealth_dist}",
             f"\nTotal avg. cluster size: {model.total_avg_cluster_size}",
-            f"\nCluster size data: {model.cluster_data}"
+            f"\nCluster size data: {model.cluster_data}",
+            f"\nPercolation data: {model.percolation_data}",
         )
         
 def schelling_draw(agent):
