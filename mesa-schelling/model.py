@@ -92,7 +92,7 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, width=100, height=100, density=0.8, fixed_areas_pc=0.0, pop_weights=[0.6, 0.2, 0.1, 0.1], homophily=3, cluster_threshold = 10):
+    def __init__(self, width=100, height=100, density=0.8, fixed_areas_pc=0.0, pop_weights=[0.5, 0.5], homophily=3, cluster_threshold = 10):
         """ 
         Initialize the Schelling model.
 
@@ -129,6 +129,7 @@ class Schelling(mesa.Model):
         self.cluster_sizes = {}
         self.cluster_data = {}
         self.percolation_data = {}
+        self.boolean_percolation = 0
 
         # Define datacollector
         self.datacollector = mesa.DataCollector(
@@ -141,6 +142,7 @@ class Schelling(mesa.Model):
                 "cluster_sizes": lambda m: m.cluster_sizes.copy(), # Dictonary of cluster sizes
                 "cluster_data": lambda m: m.cluster_data.copy(), # Dictonary of cluster data
                 "percolation_data": lambda m: m.percolation_data.copy(), # Dictonary of percolation data
+                "boolean_percolation": "boolean_percolation", # Model-level boolean value if percolates
             },
             agent_reporters={
                 # For testing purposes, agent's individual x and y
@@ -410,6 +412,7 @@ class Schelling(mesa.Model):
         self.cluster_data = self.cluster_summary(self.cluster_sizes)
         self.total_avg_cluster_size = np.average([np.mean(self.cluster_sizes[value]) for value in self.cluster_sizes.keys()], weights = self.pop_weights)
         self.percolation_data = self.percolation_detector(array)
+        self.boolean_percolation = any([any(self.percolation_data[value]) for value in self.cluster_sizes.keys()])
 
     def reset_model_stats(self):
         """
