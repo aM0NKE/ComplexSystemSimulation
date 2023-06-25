@@ -63,6 +63,11 @@ class SchellingAgent(mesa.Agent):
         # Update the wealth distribution
         self.model.wealth_dist[self.type] += self.wealth
 
+        # Update individual wealth per agent type attributes for visualiaztion
+        var_key = f'wealth_t{self.type}'
+        setattr(self.model, var_key, getattr(self.model, var_key)+self.wealth)
+
+
     def move(self):
         """
         If the agent is unhappy, move to a new location.
@@ -80,6 +85,10 @@ class SchellingAgent(mesa.Agent):
         else:
             self.model.happy += 1
             self.model.happy_dist[self.type] += 1
+
+            # Update individual happy per agent type attributes for visualiaztion
+            var_key = f'happy_t{self.type}'
+            setattr(self.model, var_key, getattr(self.model, var_key)+1)
 
     def step(self):
         if self.type != -1: # Don't move fixed objects
@@ -123,24 +132,88 @@ class Schelling(mesa.Model):
         # Set up model statistics
         self.happy = 0
         self.happy_dist = {i: 0 for i in range(self.N)}
+        self.happy_t0 = 0
+        self.happy_t1 = 0
+        self.happy_t2 = 0
+        self.happy_t3 = 0
+        self.happy_t4 = 0
+        self.happy_t5 = 0
+        self.happy_t6 = 0
+        self.happy_t7 = 0
+        self.happy_t8 = 0
+        self.happy_t9 = 0
+
         self.total_wealth = 0
         self.wealth_dist = {i: 0 for i in range(self.N)}
+        self.wealth_t0 = 0
+        self.wealth_t1 = 0
+        self.wealth_t2 = 0
+        self.wealth_t3 = 0
+        self.wealth_t4 = 0
+        self.wealth_t5 = 0
+        self.wealth_t6 = 0
+        self.wealth_t7 = 0
+        self.wealth_t8 = 0
+        self.wealth_t9 = 0
+
         self.total_avg_cluster_size = 0.0
         self.cluster_sizes = {}
         self.cluster_data = {}
+        self.cluster_t0 = 0
+        self.cluster_t1 = 0
+        self.cluster_t2 = 0
+        self.cluster_t3 = 0
+        self.cluster_t4 = 0
+        self.cluster_t5 = 0
+        self.cluster_t6 = 0
+        self.cluster_t7 = 0
+        self.cluster_t8 = 0
+        self.cluster_t9 = 0
+
         self.percolation_data = {}
         self.boolean_percolation = 0
 
         # Define datacollector
         self.datacollector = mesa.DataCollector(
             model_reporters={
-                "happy": "happy", # Model-level count of happy agents
-                "total_wealth": "total_wealth", # Model-level count of total wealth
-                "wealth_distribution": lambda m: m.wealth_dist.copy(),
-                "happy_distribution": lambda m: m.happy_dist.copy(),
-                "total_avg_cluster_size": "total_avg_cluster_size",  # Model-level total average cluster size
+                "happy": lambda m: m.happy, # Model-level count of happy agents
+                "happy_dist": lambda m: m.happy_dist.copy(), # Model-level count of happy agents
+                "happy_t0": lambda m: m.happy_t0, 
+                "happy_t1": lambda m: m.happy_t1, 
+                "happy_t2": lambda m: m.happy_t2, 
+                "happy_t3": lambda m: m.happy_t3, 
+                "happy_t4": lambda m: m.happy_t4,
+                "happy_t5": lambda m: m.happy_t5,
+                "happy_t6": lambda m: m.happy_t6,
+                "happy_t7": lambda m: m.happy_t7,
+                "happy_t8": lambda m: m.happy_t8,
+                "happy_t9": lambda m: m.happy_t0,  
+                "total_wealth": lambda m: m.total_wealth, # Model-level count of total wealth
+                "wealth_dist": lambda m: m.wealth_dist.copy(), # Model-level count of total wealth
+                "wealth_t0": lambda m: m.wealth_t0,
+                "wealth_t1": lambda m: m.wealth_t1,
+                "wealth_t2": lambda m: m.wealth_t2,
+                "wealth_t3": lambda m: m.wealth_t3,
+                "wealth_t4": lambda m: m.wealth_t4,
+                "wealth_t5": lambda m: m.wealth_t5,
+                "wealth_t6": lambda m: m.wealth_t6,
+                "wealth_t7": lambda m: m.wealth_t7,
+                "wealth_t8": lambda m: m.wealth_t8,
+                "wealth_t9": lambda m: m.wealth_t9,
+                "total_avg_cluster_size": lambda m: m.total_avg_cluster_size,  # Model-level total average cluster size
                 "cluster_sizes": lambda m: m.cluster_sizes.copy(), # Dictonary of cluster sizes
                 "cluster_data": lambda m: m.cluster_data.copy(), # Dictonary of cluster data
+                "cluster_t0": lambda m: m.cluster_t0,
+                "cluster_t1": lambda m: m.cluster_t1,
+                "cluster_t2": lambda m: m.cluster_t2,
+                "cluster_t3": lambda m: m.cluster_t3,
+                "cluster_t4": lambda m: m.cluster_t4,
+                "cluster_t5": lambda m: m.cluster_t5,
+                "cluster_t6": lambda m: m.cluster_t6,
+                "cluster_t7": lambda m: m.cluster_t7,
+                "cluster_t8": lambda m: m.cluster_t8,
+                "cluster_t9": lambda m: m.cluster_t9,
+
                 "percolation_data": lambda m: m.percolation_data.copy(), # Dictonary of percolation data
                 "boolean_percolation": "boolean_percolation", # Model-level boolean value if a cluster percolates
             },
@@ -268,7 +341,7 @@ class Schelling(mesa.Model):
                 # Determine if the agent is a minority
                 agent_type = self.random.choices(
                     population=range(self.N),
-                    weights=self.pop_weights,)[0]
+                    weights=self.pop_weights)[0]
 
                 # Create a new agent
                 init_wealth = np.random.lognormal(10.0, 1.0) # Lognormal distribution with mean 3 and std 1 (USA)
@@ -358,6 +431,10 @@ class Schelling(mesa.Model):
                                         np.std(cluster_sizes[value])]
             else:
                 cluster_data[value] = [0, 0, 0]
+
+            # Update individual cluster sizes per agent type attributes for visualiaztion
+            var_key = f'cluster_t{value}'
+            setattr(self, var_key, cluster_data[value][1])
         return cluster_data
     
     def percolation_detector(self, array):
@@ -421,8 +498,29 @@ class Schelling(mesa.Model):
 
         self.happy = 0
         self.happy_dist = {i: 0 for i in range(self.N)}
+        self.happy_t0 = 0
+        self.happy_t1 = 0
+        self.happy_t2 = 0
+        self.happy_t3 = 0
+        self.happy_t4 = 0
+        self.happy_t5 = 0
+        self.happy_t6 = 0
+        self.happy_t7 = 0
+        self.happy_t8 = 0
+        self.happy_t9 = 0
+
         self.total_wealth = 0
         self.wealth_dist = {i: 0 for i in range(self.N)}
+        self.wealth_t0 = 0
+        self.wealth_t1 = 0
+        self.wealth_t2 = 0
+        self.wealth_t3 = 0
+        self.wealth_t4 = 0
+        self.wealth_t5 = 0
+        self.wealth_t6 = 0
+        self.wealth_t7 = 0
+        self.wealth_t8 = 0
+        self.wealth_t9 = 0
         
     def step(self):
         """

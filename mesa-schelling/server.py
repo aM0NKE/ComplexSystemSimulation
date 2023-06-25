@@ -3,22 +3,24 @@ import mesa
 from model import Schelling
 
 
-def get_model_stats(model):
+def happy_stats(model):
     """
     Display a text of some general model statistics.
     """
-    
-    return (
-            f"Happy agents: {model.happy}",
-            f"\nHappy distribution: {model.happy_dist}",
-            f"\nTotal wealth: {model.total_wealth}",
-            f"\nWealth distribution: {model.wealth_dist}",
-            f"\nTotal avg. cluster size: {model.total_avg_cluster_size}",
-            f"\nCluster size data: {model.cluster_data}",
-            f"\nPercolation data: {model.percolation_data}",
-            f"\nPercolation boolean: {model.boolean_percolation}"
-        )
-        
+    return f"Happy agents: {model.happy}"
+            # , f"\nHappy distribution: {model.happy_dist}"
+
+def wealth_stats(model):
+    return f"\nTotal wealth: {model.total_wealth}"
+            # , f"\nWealth distribution: {model.wealth_dist}"
+
+def cluster_stats(model):
+    return f"\nTotal avg. cluster size: {model.total_avg_cluster_size}"
+            # , f"\nCluster size data: {model.cluster_data}"
+
+def percolation_stats(model):
+    return f"\nPercolation data: {model.percolation_data}", f"\nPercolation boolean: {model.boolean_percolation}"
+     
 def schelling_draw(agent):
     """
     Portrayal Method for canvas
@@ -47,21 +49,53 @@ model_params = {
     "width": mesa.visualization.Slider("Grid width", 100, 10, 100, 10),
     "density": mesa.visualization.Slider("Agent density", 0.97, 0.1, 1.0, 0.01),
     "fixed_areas_pc": mesa.visualization.Slider("Fixed area density", 0.0, 0.0, 0.2, 0.025),
-    #"minority_pc": mesa.visualization.Slider("Fraction minority", 0.2, 0.00, 1.0, 0.05),
     "homophily": mesa.visualization.Slider("Homophily", 3, 0, 8, 1),
     "cluster_threshold": mesa.visualization.Slider("cluster_threshold", 4, 1, 8, 1),
 }
 
 # Define graphic elements
 canvas_element = mesa.visualization.CanvasGrid(schelling_draw, 100, 100, 1000, 1000)
-happy_chart = mesa.visualization.ChartModule([{"Label": "happy", "Color": "Black"}])
-total_wealth_chart = mesa.visualization.ChartModule([{"Label": "total_wealth", "Color": "Black"}])
-total_cluster_size_chart = mesa.visualization.ChartModule([{"Label": "total_avg_cluster_size", "Color": "Black"}])
+happy_chart = mesa.visualization.ChartModule([  {"Label": "happy", "Color": "Black"},
+                                                {"Label": "happy_t0", "Color": "#FF0000"},
+                                                {"Label": "happy_t1", "Color": "#00FF00"},
+                                                {"Label": "happy_t2", "Color": "#0000FF"},
+                                                {"Label": "happy_t3", "Color": "#FFA500"},
+                                                {"Label": "happy_t4", "Color": "#FF00FF"},
+                                                {"Label": "happy_t5", "Color": "#00FFFF"},
+                                                {"Label": "happy_t6", "Color": "#FFFF00"},
+                                                {"Label": "happy_t7", "Color": "#800080"},
+                                                {"Label": "happy_t8", "Color": "#008000"},
+                                                {"Label": "happy_t9", "Color": "#FFC0CB"},
+                                            ])
+wealth_chart = mesa.visualization.ChartModule([ {"Label": "total_wealth", "Color": "Black"},
+                                                {"Label": "wealth_t0", "Color": "#FF0000"},
+                                                {"Label": "wealth_t1", "Color": "#00FF00"},
+                                                {"Label": "wealth_t2", "Color": "#0000FF"},
+                                                {"Label": "wealth_t3", "Color": "#FFA500"},
+                                                {"Label": "wealth_t4", "Color": "#FF00FF"},
+                                                {"Label": "wealth_t5", "Color": "#00FFFF"},
+                                                {"Label": "wealth_t6", "Color": "#FFFF00"},
+                                                {"Label": "wealth_t7", "Color": "#800080"},
+                                                {"Label": "wealth_t8", "Color": "#008000"},
+                                                {"Label": "wealth_t9", "Color": "#FFC0CB"},
+                                            ])
+cluster_chart = mesa.visualization.ChartModule([{"Label": "total_avg_cluster_size", "Color": "Black"},
+                                                {"Label": "cluster_t0", "Color": "#FF0000"},
+                                                {"Label": "cluster_t1", "Color": "#00FF00"},
+                                                {"Label": "cluster_t2", "Color": "#0000FF"},
+                                                {"Label": "cluster_t3", "Color": "#FFA500"},
+                                                {"Label": "cluster_t4", "Color": "#FF00FF"},
+                                                {"Label": "cluster_t5", "Color": "#00FFFF"},
+                                                {"Label": "cluster_t6", "Color": "#FFFF00"},
+                                                {"Label": "cluster_t7", "Color": "#800080"},
+                                                {"Label": "cluster_t8", "Color": "#008000"},
+                                                {"Label": "cluster_t9", "Color": "#FFC0CB"},
+                                            ])
 
 # Create the server, and pass the grid and the graph
 server = mesa.visualization.ModularServer(
     Schelling,
-    [canvas_element, get_model_stats, total_cluster_size_chart, happy_chart, total_wealth_chart],
+    [canvas_element, percolation_stats, wealth_stats, wealth_chart, cluster_stats, cluster_chart, happy_stats, happy_chart],
     "Schelling",
     model_params,
 )
