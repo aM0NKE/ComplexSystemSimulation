@@ -113,6 +113,7 @@ class Schelling(mesa.Model):
             pop_weights: The proportion of each agent type in the population.
             homophily: The minimum number of similar neighbors an agent needs to be happy.
             cluster_threshold: The minimum number of agents together to count as a cluster.
+            cluster_coefficient: The coefficient that indicates how much segregation occurs.
         """
 
         # Set parameters
@@ -172,6 +173,7 @@ class Schelling(mesa.Model):
 
         self.percolation_data = {}
         self.boolean_percolation = 0
+        self.cluster_coefficient = 0.0
 
         # Define datacollector
         self.datacollector = mesa.DataCollector(
@@ -478,6 +480,18 @@ class Schelling(mesa.Model):
 
         return percolation_check
     
+    def WeightedAveragepopweights(self, cluster_sizes):
+        S = 0
+        
+        for i in cluster_sizes:
+            a = 0
+            for j in range(len(cluster_sizes[i])):
+                a += cluster_sizes[i][j]**2
+            
+            S += (1/(self.grid.width*self.grid.height*self.pop_weights[i])**2)*a
+        
+        return S/self.N 
+    
     def calculate_cluster_stats(self):
         """
         Calculates the number of clusters, mean cluster size and standard deviation
@@ -490,6 +504,7 @@ class Schelling(mesa.Model):
         self.total_avg_cluster_size = np.average([np.mean(self.cluster_sizes[value]) if len(self.cluster_sizes[value]) > 0 else 0.0 for value in self.cluster_sizes.keys()], weights = self.pop_weights)
         self.percolation_data = self.percolation_detector(array)
         self.boolean_percolation = any([any(self.percolation_data[value]) for value in self.percolation_data.keys()])
+        self.cluster_coefficient = self.WeightedAveragepopweights(self.cluster_sizes)
 
     def reset_model_stats(self):
         """
