@@ -487,7 +487,7 @@ class Schelling(mesa.Model):
         array = self.grid2numpy()
         self.cluster_sizes = self.find_cluster_sizes(array)
         self.cluster_data = self.cluster_summary(self.cluster_sizes)
-        self.total_avg_cluster_size = np.average([np.mean(self.cluster_sizes[value]) for value in self.cluster_sizes.keys()], weights = self.pop_weights)
+        self.total_avg_cluster_size = np.average([np.mean(self.cluster_sizes[value]) for value in self.cluster_sizes.keys() if len(self.cluster_sizes[value]) > 0], weights = self.pop_weights)
         self.percolation_data = self.percolation_detector(array)
         self.boolean_percolation = any([any(self.percolation_data[value]) for value in self.percolation_data.keys()])
 
