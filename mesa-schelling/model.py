@@ -47,10 +47,10 @@ class SchellingAgent(mesa.Agent):
 
             # If an agent has no neighbors or its wealth is greater than that of 
             # its neighbors, keep its wealth
-            if cnt_neighbors == 0 or avg_neighbor_wealth < self.wealth:
+            if cnt_neighbors == 0 or self.wealth <= avg_neighbor_wealth * (1 - self.model.alpha / 100) or self.wealth >= avg_neighbor_wealth * (1 - self.model.alpha / 100):
                 self.wealth = self.wealth
             # Else update its wealth according to the average of its neighbors
-            elif avg_neighbor_wealth > self.wealth:
+            elif avg_neighbor_wealth * (1 - self.model.alpha / 100) <= self.wealth <= avg_neighbor_wealth * (1 + self.model.alpha / 100):
                 self.wealth = 0.5 * self.wealth + 0.5 * avg_neighbor_wealth
 
         # If an agent has no neighbors, keep its wealth
@@ -101,7 +101,7 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, width=100, height=100, density=0.8, fixed_areas_pc=0.0, pop_weights =  (0.6, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715), homophily=3, cluster_threshold = 10):
+    def __init__(self, width=100, height=100, density=0.8, fixed_areas_pc=0.0, pop_weights =  (0.6, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715), homophily=3, cluster_threshold = 10, alpha = 5):
         """ 
         Initialize the Schelling model.
 
@@ -125,6 +125,7 @@ class Schelling(mesa.Model):
         self.N = len(pop_weights)
         self.homophily = homophily
         self.cluster_threshold = cluster_threshold
+        self.alpha = alpha
 
         # Set up model objects
         self.schedule = mesa.time.RandomActivation(self)
