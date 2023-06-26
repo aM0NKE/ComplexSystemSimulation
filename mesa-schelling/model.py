@@ -101,7 +101,7 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, width=100, height=100, density=0.8, fixed_areas_pc=0.0, pop_weights=[0.5, 0.5], homophily=3, cluster_threshold = 10):
+    def __init__(self, width=100, height=100, density=0.8, fixed_areas_pc=0.0, pop_weights =  (0.6, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715), homophily=3, cluster_threshold = 10):
         """ 
         Initialize the Schelling model.
 
@@ -487,7 +487,7 @@ class Schelling(mesa.Model):
         array = self.grid2numpy()
         self.cluster_sizes = self.find_cluster_sizes(array)
         self.cluster_data = self.cluster_summary(self.cluster_sizes)
-        self.total_avg_cluster_size = np.average([np.mean(self.cluster_sizes[value]) for value in self.cluster_sizes.keys() if len(self.cluster_sizes[value]) > 0], weights = self.pop_weights)
+        self.total_avg_cluster_size = np.average([np.mean(self.cluster_sizes[value]) if len(self.cluster_sizes[value]) > 0 else 0.0 for value in self.cluster_sizes.keys()], weights = self.pop_weights)
         self.percolation_data = self.percolation_detector(array)
         self.boolean_percolation = any([any(self.percolation_data[value]) for value in self.percolation_data.keys()])
 

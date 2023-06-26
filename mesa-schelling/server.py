@@ -50,7 +50,7 @@ model_params = {
     "density": mesa.visualization.Slider("Agent density", 0.97, 0.1, 1.0, 0.01),
     "fixed_areas_pc": mesa.visualization.Slider("Fixed area density", 0.0, 0.0, 0.2, 0.025),
     "homophily": mesa.visualization.Slider("Homophily", 3, 0, 8, 1),
-    "cluster_threshold": mesa.visualization.Slider("cluster_threshold", 4, 1, 8, 1),
+    "cluster_threshold": mesa.visualization.Slider("cluster_threshold", 4, 1, 100, 1),
 }
 
 # Define graphic elements
