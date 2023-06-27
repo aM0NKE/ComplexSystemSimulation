@@ -347,7 +347,7 @@ class Schelling(mesa.Model):
                     weights=self.pop_weights)[0]
 
                 # Create a new agent
-                init_wealth = np.random.lognormal(10.0, 1.0) # Lognormal distribution with mean 3 and std 1 (USA)
+                init_wealth = np.random.lognormal(1.0, 1.5) # Lognormal distribution with mean 3 and std 1 (USA)
                 agent = SchellingAgent((x, y), self, agent_type, init_wealth)
                 # Add the agent to the grid
                 self.grid.place_agent(agent, (x, y))
