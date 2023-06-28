@@ -141,7 +141,7 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, size=100, density=0.9, fixed_areas_pc=0.0, pop_weights=[0.6, 0.4], homophily=4, cluster_threshold=4, alpha=0.5, stopping_threshold=5, server=False):
+    def __init__(self, size=100, density=0.9, fixed_areas_pc=0.0, pop_weights=[0.5, 0.5], homophily=4, cluster_threshold=4, alpha=0.5, stopping_threshold=5, server=False):
         """ 
         Initialize the Schelling model.
 
@@ -402,7 +402,8 @@ class Schelling(mesa.Model):
         This function converts the grid to a numpy array.
         """
 
-        array = np.zeros((self.grid.width, self.grid.height), dtype=int)
+        array = -1 * np.ones((self.grid.width, self.grid.height), dtype=int)
+
         for cell in self.grid.coord_iter():
             _, x, y = cell
             if len(self.grid.get_cell_list_contents((x, y))) != 0:
@@ -513,11 +514,11 @@ class Schelling(mesa.Model):
                 # If the cluster is not big enough to percolate or if a previous cluster already percolated the check is skipped.
                 for label in range(1,num_clusters+1):
                     if percolates_vertically == False and clusters[label] >= mask.shape[0]:
-                        if label in labels[0,:] and label in labels[-1,:]:
+                        if label in labels[:,0] and label in labels[:,-1]:
                             percolates_vertically = True
                     
                     if percolates_horizontally == False  and clusters[label] >= mask.shape[1]:
-                        if label in labels[:,0] and label in labels[:,-1]:
+                        if label in labels[0,:] and label in labels[-1,:]:
                             percolates_horizontally = True
 
                 percolation_check[value] = [percolates_vertically, percolates_horizontally]
