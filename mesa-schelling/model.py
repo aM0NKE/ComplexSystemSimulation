@@ -105,7 +105,7 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, width=100, height=100, density=0.8, fixed_areas_pc=0.0, pop_weights =  (0.6, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715), homophily=3, cluster_threshold=10, alpha=5, stopping_threshold=5):
+    def __init__(self, size=100, density=0.8, fixed_areas_pc=0.0, pop_weights=(0.6, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715), homophily=3, cluster_threshold=4, alpha=5, stopping_threshold=5):
         """ 
         Initialize the Schelling model.
 
@@ -121,8 +121,7 @@ class Schelling(mesa.Model):
         """
 
         # Set parameters
-        self.width = width
-        self.height = height
+        self.size = size
         self.density = density
         self.fixed_areas_pc = fixed_areas_pc
         self.pop_weights = pop_weights
@@ -134,7 +133,7 @@ class Schelling(mesa.Model):
 
         # Set up model objects
         self.schedule = mesa.time.RandomActivation(self)
-        self.grid = mesa.space.SingleGrid(width, height, torus=True)
+        self.grid = mesa.space.SingleGrid(size, size, torus=True)
 
         # Set up model statistics
         self.happy = 0
@@ -256,7 +255,7 @@ class Schelling(mesa.Model):
         Note: Fixed cells are represented as an agent of type -1.
         """
 
-        num_fixed_cells = int(fixed_areas_pc * self.width * self.height)
+        num_fixed_cells = int(fixed_areas_pc * self.size * self.size)
 
         # Generate clusters of fixed cells
         cluster_centers = self.generate_cluster_centers(num_fixed_cells)
@@ -289,8 +288,8 @@ class Schelling(mesa.Model):
 
         cluster_centers = []
         for _ in range(num_centers):
-            x = self.random.randrange(self.width)
-            y = self.random.randrange(self.height)
+            x = self.random.randrange(self.size)
+            y = self.random.randrange(self.size)
             cluster_centers.append((x, y))
         return cluster_centers
 
