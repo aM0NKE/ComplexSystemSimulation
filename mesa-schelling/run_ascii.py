@@ -33,8 +33,7 @@ class SchellingTextVisualization(mesa.visualization.TextVisualization):
 
 if __name__ == "__main__":
     model_params = {
-        "height": 20,
-        "width": 20,
+        "size": 20,
         # Agent density, from 0.8 to 1.0
         "density": 0.8,
         # Fraction minority, from 0.2 to 1.0
@@ -47,6 +46,9 @@ if __name__ == "__main__":
         "homophily": 3,
         # Cluster threshold, from 4 to 8
         "cluster_threshold": 20,
+        "alpha": .05,
+        "stopping_threshold": 5,
+        "server": False
     }
 
     model = Schelling(**model_params)
