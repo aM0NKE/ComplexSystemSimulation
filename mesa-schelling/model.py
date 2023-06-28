@@ -557,7 +557,7 @@ class Schelling(mesa.Model):
             if self.stopping_cnt >= self.stopping_threshold:
                 print("Halt")
                 self.running = False
-                return
+                # return False
 
         # Update happy previous
         self.happy_prev = self.happy
@@ -567,15 +567,16 @@ class Schelling(mesa.Model):
         Run one step of the model. If All agents are happy, halt the model.
         """
 
-        # Reset model statistics
-        self.reset_model_stats()
+        while self.running == True:
+            # Reset model statistics
+            self.reset_model_stats()
 
-        # Advance each agent by one step
-        self.schedule.step()
+            # Advance each agent by one step
+            self.schedule.step()
 
-        # Collect data
-        self.calculate_cluster_stats()
-        self.datacollector.collect(self)
+            # Collect data
+            self.calculate_cluster_stats()
+            self.datacollector.collect(self)
 
-        # Check stopping condition
-        self.stopping_condition()
+            # Check stopping condition
+            self.stopping_condition()
