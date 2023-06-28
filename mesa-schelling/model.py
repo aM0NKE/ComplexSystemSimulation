@@ -105,7 +105,7 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, size=100, density=0.8, fixed_areas_pc=0.0, pop_weights=(0.6, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715), homophily=3, cluster_threshold=4, alpha=5, stopping_threshold=5):
+    def __init__(self, size=100, density=0.9, fixed_areas_pc=0.0, pop_weights=[0.6, 0.2, 0.2], homophily=4, cluster_threshold=4, alpha=0.5, stopping_threshold=5, server=False):
         """ 
         Initialize the Schelling model.
 
@@ -236,6 +236,7 @@ class Schelling(mesa.Model):
         self.running = True
         self.stopping_cnt = 0
         self.happy_prev = 0
+        self.server = server
 
         # Add fixed cells
         self.fixed_cells = []
@@ -555,19 +556,17 @@ class Schelling(mesa.Model):
         if self.happy_prev >= self.happy: 
             self.stopping_cnt += 1
             if self.stopping_cnt >= self.stopping_threshold:
-                print("Halt")
                 self.running = False
-                # return False
-
-        # Update happy previous
-        self.happy_prev = self.happy
+        else:
+            self.stopping_cnt = 0
+            self.happy_prev = self.happy
         
     def step(self):
         """
         Run one step of the model. If All agents are happy, halt the model.
         """
 
-        while self.running == True:
+        if self.server == True:
             # Reset model statistics
             self.reset_model_stats()
 
@@ -580,3 +579,18 @@ class Schelling(mesa.Model):
 
             # Check stopping condition
             self.stopping_condition()
+                
+        else:
+            while self.running == True:
+                # Reset model statistics
+                self.reset_model_stats()
+
+                # Advance each agent by one step
+                self.schedule.step()
+
+                # Collect data
+                self.calculate_cluster_stats()
+                self.datacollector.collect(self)
+
+                # Check stopping condition
+                self.stopping_condition()
