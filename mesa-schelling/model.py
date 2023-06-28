@@ -545,13 +545,19 @@ class Schelling(mesa.Model):
         self.wealth_t9 = 0
 
     def stopping_condition(self):
-        print(self.happy_prev, self.happy)
-        # Halt if number of happy agents doesnt increase from previous step
+        """
+        Check if the model should stop running.
+        
+        Stopping Criterion: Halt if number of happy agents doesn't increase
+        from previous step for a number of steps equal to the stopping threshold. 
+        """
+
         if self.happy_prev >= self.happy: 
             self.stopping_cnt += 1
             if self.stopping_cnt >= self.stopping_threshold:
                 print("Halt")
                 self.running = False
+                return
 
         # Update happy previous
         self.happy_prev = self.happy
@@ -573,9 +579,3 @@ class Schelling(mesa.Model):
 
         # Check stopping condition
         self.stopping_condition()
-
-        
-
-        # # Halt if no unhappy agents
-        # if self.happy == self.schedule.get_agent_count():
-        #     self.running = False
