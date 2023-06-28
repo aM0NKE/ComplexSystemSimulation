@@ -45,17 +45,17 @@ class SchellingAgent(mesa.Agent):
 
             avg_neighbor_wealth = wealth_neighbors / cnt_neighbors
 
-            # If an agent has no neighbors or its wealth is greater than that of 
-            # its neighbors, keep its wealth
-            if cnt_neighbors == 0 or self.wealth < avg_neighbor_wealth * (1 - self.model.alpha / 100) or self.wealth > avg_neighbor_wealth * (1 - self.model.alpha / 100):
-                self.wealth = self.wealth
-            # Else update its wealth according to the average of its neighbors
-            elif avg_neighbor_wealth * (1 - self.model.alpha / 100) <= self.wealth <= avg_neighbor_wealth * (1 + self.model.alpha / 100):
-                self.wealth = 0.5 * self.wealth + 0.5 * avg_neighbor_wealth
+            # # If an agent has no neighbors or its wealth is greater than that of 
+            # # its neighbors, keep its wealth
+            # if cnt_neighbors == 0 or self.wealth < avg_neighbor_wealth * (1 - self.model.alpha / 100) or self.wealth > avg_neighbor_wealth * (1 - self.model.alpha / 100):
+            #     self.wealth = self.wealth
+            # # Else update its wealth according to the average of its neighbors
+            # elif avg_neighbor_wealth * (1 - self.model.alpha / 100) <= self.wealth <= avg_neighbor_wealth * (1 + self.model.alpha / 100):
+            #     self.wealth = 0.5 * self.wealth + 0.5 * avg_neighbor_wealth
 
             # economic rules V1
-            # if self.wealth < avg_neighbor_wealth:
-            #     self.wealth = 0.5 * self.wealth + 0.5 * avg_neighbor_wealth
+            if self.wealth < avg_neighbor_wealth:
+                self.wealth = 0.5 * self.wealth + 0.5 * avg_neighbor_wealth
 
         # If an agent has no neighbors, keep its wealth
         else:
@@ -105,7 +105,7 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, width=100, height=100, density=0.8, fixed_areas_pc=0.0, pop_weights =  (0.6, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715), homophily=3, cluster_threshold = 10, alpha = 5):
+    def __init__(self, width=100, height=100, density=0.8, fixed_areas_pc=0.0, pop_weights =  (0.6, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715), homophily=3, cluster_threshold=10, alpha=5, stopping_threshold=5):
         """ 
         Initialize the Schelling model.
 
@@ -130,6 +130,7 @@ class Schelling(mesa.Model):
         self.homophily = homophily
         self.cluster_threshold = cluster_threshold
         self.alpha = alpha
+        self.stopping_threshold = stopping_threshold
 
         # Set up model objects
         self.schedule = mesa.time.RandomActivation(self)
@@ -234,6 +235,8 @@ class Schelling(mesa.Model):
 
         # Variable to halt model
         self.running = True
+        self.stopping_cnt = 0
+        self.happy_prev = 0
 
         # Add fixed cells
         self.fixed_cells = []
@@ -541,6 +544,18 @@ class Schelling(mesa.Model):
         self.wealth_t7 = 0
         self.wealth_t8 = 0
         self.wealth_t9 = 0
+
+    def stopping_condition(self):
+        print(self.happy_prev, self.happy)
+        # Halt if number of happy agents doesnt increase from previous step
+        if self.happy_prev >= self.happy: 
+            self.stopping_cnt += 1
+            if self.stopping_cnt >= self.stopping_threshold:
+                print("Halt")
+                self.running = False
+
+        # Update happy previous
+        self.happy_prev = self.happy
         
     def step(self):
         """
@@ -557,6 +572,11 @@ class Schelling(mesa.Model):
         self.calculate_cluster_stats()
         self.datacollector.collect(self)
 
-        # Halt if no unhappy agents
-        if self.happy == self.schedule.get_agent_count():
-            self.running = False
+        # Check stopping condition
+        self.stopping_condition()
+
+        
+
+        # # Halt if no unhappy agents
+        # if self.happy == self.schedule.get_agent_count():
+        #     self.running = False
