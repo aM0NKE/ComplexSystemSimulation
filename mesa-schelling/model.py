@@ -65,7 +65,9 @@ class SchellingAgent(mesa.Agent):
 
             # Economic rules V2
             # Else update its wealth according to the average of its neighbors
-            if (self.wealth / avg_neighbor_wealth) <= 1 - self.model.alpha:
+            # print("w/anw", self.wealth / avg_neighbor_wealth)
+            # print("a", self.model.alpha)
+            if (self.wealth / avg_neighbor_wealth) <= self.model.alpha:
                 self.wealth = 0.5 * self.wealth + 0.5 * avg_neighbor_wealth
                 # print("Update")
             else:

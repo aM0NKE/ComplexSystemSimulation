@@ -46,7 +46,7 @@ if __name__ == "__main__":
         "homophily": 3,
         # Cluster threshold, from 4 to 8
         "cluster_threshold": 20,
-        "alpha": .05,
+        "alpha": .95,
         "stopping_threshold": 5,
         "server": False
     }
