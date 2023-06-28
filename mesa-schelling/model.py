@@ -25,41 +25,61 @@ class SchellingAgent(mesa.Agent):
         self.type = agent_type
         self.wealth = init_wealth
 
+    def calculate_avg_neighbor_wealth(self, neighbors):
+        """
+        Calculates the average wealth of the agent's neighbors.
+        """
+
+        cnt_neighbors = 0
+        wealth_neighbors = 0
+
+        # Iterate over all neighbors in moore neighborhood
+        for neighbor in self.model.grid.iter_neighbors(self.pos, True):
+
+            # Skip fixed objects
+            if neighbor.type == -1:
+                continue 
+
+            cnt_neighbors += 1
+            wealth_neighbors += neighbor.wealth
+
+        avg_neighbor_wealth = wealth_neighbors / cnt_neighbors
+        return avg_neighbor_wealth
+
     def update_wealth(self):
         """
         Updates the agent's wealth based on the average wealth of its neighbors.
         """
 
+        # Find the agent's neighbors
+        neighbors = self.model.grid.get_neighbors(self.pos, True)
+
         # If an agent has neighbors, update its wealth
-        if len(self.model.grid.get_neighbors(self.pos, True)):
-            # Find agent's neighbors' wealth and count
-            cnt_neighbors = 0
-            wealth_neighbors = 0
-            for neighbor in self.model.grid.iter_neighbors(self.pos, True):
-                # Skip fixed objects
-                if neighbor.type == -1:
-                    continue 
+        if len(neighbors) > 0 and self.is_happy():
 
-                cnt_neighbors += 1
-                wealth_neighbors += neighbor.wealth
+            # Find avg. wealth of agent's neighbors
+            avg_neighbor_wealth = self.calculate_avg_neighbor_wealth(neighbors)
+            # print("step", self.model.schedule.steps)
+            # print("self.wealth", self.wealth)
+            # print("avg.", avg_neighbor_wealth)
 
-            avg_neighbor_wealth = wealth_neighbors / cnt_neighbors
-
-            # If an agent has no neighbors or its wealth is greater than that of 
-            # its neighbors, keep its wealth
-            if cnt_neighbors == 0 or (self.wealth / avg_neighbor_wealth) > 1 or (self.wealth / avg_neighbor_wealth) < self.model.alpha:
-                self.wealth = self.wealth
+            # Economic rules V2
             # Else update its wealth according to the average of its neighbors
-            elif self.model.alpha <= (self.wealth / avg_neighbor_wealth) <= 1:
+            if (self.wealth / avg_neighbor_wealth) <= 1 - self.model.alpha:
                 self.wealth = 0.5 * self.wealth + 0.5 * avg_neighbor_wealth
+                # print("Update")
+            else:
+                self.wealth = self.wealth
+                # print("No Update")
 
-            # # economic rules V1
+            # Economic rules V1
             # if self.wealth < avg_neighbor_wealth:
             #     self.wealth = 0.5 * self.wealth + 0.5 * avg_neighbor_wealth
 
         # If an agent has no neighbors, keep its wealth
         else:
             self.wealth = self.wealth
+            # print("No neighbors")
         
         # Update the model's total wealth
         self.model.total_wealth += self.wealth
@@ -71,20 +91,36 @@ class SchellingAgent(mesa.Agent):
         var_key = f'wealth_t{self.type}'
         setattr(self.model, var_key, getattr(self.model, var_key)+self.wealth)
 
+    def is_happy(self):
+        """
+        Determine whether the agent is happy or not.
+        """
+
+        # Find the agent's neighbors
+        neighbors = self.model.grid.get_neighbors(self.pos, True)
+
+        # Find the agent's similar neighbors
+        similar = 0
+        for neighbor in neighbors:
+            if neighbor.type == self.type:
+                similar += 1
+
+        # If the agent is unhappy, return False
+        if similar < self.model.homophily:
+            return False
+
+        # If the agent is happy, return True
+        else:
+            return True
+
 
     def move(self):
         """
         If the agent is unhappy, move to a new location.
         """
 
-        # Determine the agent's similar neighbors
-        similar = 0
-        for neighbor in self.model.grid.iter_neighbors(self.pos, True):
-            if neighbor.type == self.type:
-                similar += 1
-
         # If unhappy, move:
-        if similar < self.model.homophily:
+        if self.is_happy() == False:
             self.model.grid.move_to_empty(self)
         else:
             self.model.happy += 1
@@ -105,7 +141,7 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, size=100, density=0.8, fixed_areas_pc=0.0, pop_weights=(0.6, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715, 0.05714285714285715), homophily=3, cluster_threshold=4, alpha=5, stopping_threshold=5):
+    def __init__(self, size=100, density=0.9, fixed_areas_pc=0.0, pop_weights=[0.5, 0.5], homophily=4, cluster_threshold=4, alpha=0.5, stopping_threshold=5, server=False):
         """ 
         Initialize the Schelling model.
 
@@ -236,6 +272,7 @@ class Schelling(mesa.Model):
         self.running = True
         self.stopping_cnt = 0
         self.happy_prev = 0
+        self.server = server
 
         # Add fixed cells
         self.fixed_cells = []
@@ -365,7 +402,8 @@ class Schelling(mesa.Model):
         This function converts the grid to a numpy array.
         """
 
-        array = np.zeros((self.grid.width, self.grid.height), dtype=int)
+        array = -1 * np.ones((self.grid.width, self.grid.height), dtype=int)
+
         for cell in self.grid.coord_iter():
             _, x, y = cell
             if len(self.grid.get_cell_list_contents((x, y))) != 0:
@@ -476,11 +514,11 @@ class Schelling(mesa.Model):
                 # If the cluster is not big enough to percolate or if a previous cluster already percolated the check is skipped.
                 for label in range(1,num_clusters+1):
                     if percolates_vertically == False and clusters[label] >= mask.shape[0]:
-                        if label in labels[0,:] and label in labels[-1,:]:
+                        if label in labels[:,0] and label in labels[:,-1]:
                             percolates_vertically = True
                     
                     if percolates_horizontally == False  and clusters[label] >= mask.shape[1]:
-                        if label in labels[:,0] and label in labels[:,-1]:
+                        if label in labels[0,:] and label in labels[-1,:]:
                             percolates_horizontally = True
 
                 percolation_check[value] = [percolates_vertically, percolates_horizontally]
@@ -555,19 +593,17 @@ class Schelling(mesa.Model):
         if self.happy_prev >= self.happy: 
             self.stopping_cnt += 1
             if self.stopping_cnt >= self.stopping_threshold:
-                print("Halt")
                 self.running = False
-                # return False
-
-        # Update happy previous
-        self.happy_prev = self.happy
+        else:
+            self.stopping_cnt = 0
+            self.happy_prev = self.happy
         
     def step(self):
         """
         Run one step of the model. If All agents are happy, halt the model.
         """
 
-        while self.running == True:
+        if self.server == True:
             # Reset model statistics
             self.reset_model_stats()
 
@@ -580,3 +616,18 @@ class Schelling(mesa.Model):
 
             # Check stopping condition
             self.stopping_condition()
+                
+        else:
+            while self.running == True:
+                # Reset model statistics
+                self.reset_model_stats()
+
+                # Advance each agent by one step
+                self.schedule.step()
+
+                # Collect data
+                self.calculate_cluster_stats()
+                self.datacollector.collect(self)
+
+                # Check stopping condition
+                self.stopping_condition()
