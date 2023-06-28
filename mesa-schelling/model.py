@@ -55,7 +55,7 @@ class SchellingAgent(mesa.Agent):
         neighbors = self.model.grid.get_neighbors(self.pos, True)
 
         # If an agent has neighbors, update its wealth
-        if len(neighbors) > 0:
+        if len(neighbors) > 0 and self.is_happy():
 
             # Find avg. wealth of agent's neighbors
             avg_neighbor_wealth = self.calculate_avg_neighbor_wealth(neighbors)
@@ -65,7 +65,7 @@ class SchellingAgent(mesa.Agent):
 
             # Economic rules V2
             # Else update its wealth according to the average of its neighbors
-            if  (self.wealth / avg_neighbor_wealth) <= 1 - self.model.alpha:
+            if (self.wealth / avg_neighbor_wealth) <= 1 - self.model.alpha:
                 self.wealth = 0.5 * self.wealth + 0.5 * avg_neighbor_wealth
                 # print("Update")
             else:
@@ -141,7 +141,7 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, size=100, density=0.9, fixed_areas_pc=0.0, pop_weights=[0.6, 0.2, 0.2], homophily=4, cluster_threshold=4, alpha=0.5, stopping_threshold=5, server=False):
+    def __init__(self, size=100, density=0.9, fixed_areas_pc=0.0, pop_weights=[0.6, 0.4], homophily=4, cluster_threshold=4, alpha=0.5, stopping_threshold=5, server=False):
         """ 
         Initialize the Schelling model.
 

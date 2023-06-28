@@ -46,7 +46,7 @@ def schelling_draw(agent):
 # Define model parameters
 model_params = {
     "size": mesa.visualization.Slider("Grid size", 100, 10, 100, 10),
-    "density": mesa.visualization.Slider("Agent density", 0.9, 0.1, 1.0, 0.01),
+    "density": mesa.visualization.Slider("Agent density", 0.9, 0.01, 1.0, 0.01),
     "homophily": mesa.visualization.Slider("Homophily", 4, 0, 8, 1),
     "alpha": mesa.visualization.Slider("Alpha", 0.1, 0, .99, 0.01),
     "cluster_threshold": mesa.visualization.Slider("Cluster size threshold", 4, 1, 100, 1),
