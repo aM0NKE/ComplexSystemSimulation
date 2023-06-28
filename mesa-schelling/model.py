@@ -47,10 +47,10 @@ class SchellingAgent(mesa.Agent):
 
             # If an agent has no neighbors or its wealth is greater than that of 
             # its neighbors, keep its wealth
-            if cnt_neighbors == 0 or (self.wealth / avg_neighbor_wealth) < 1 or (self.wealth / avg_neighbor_wealth) > 1 + self.model.alpha:
+            if cnt_neighbors == 0 or (self.wealth / avg_neighbor_wealth) > 1 or (self.wealth / avg_neighbor_wealth) < self.model.alpha:
                 self.wealth = self.wealth
             # Else update its wealth according to the average of its neighbors
-            elif 1 <= (self.wealth / avg_neighbor_wealth) <= 1 + self.model.alpha:
+            elif self.model.alpha <= (self.wealth / avg_neighbor_wealth) <= 1:
                 self.wealth = 0.5 * self.wealth + 0.5 * avg_neighbor_wealth
 
             # # economic rules V1
