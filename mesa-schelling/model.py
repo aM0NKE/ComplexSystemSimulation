@@ -685,7 +685,7 @@ class Schelling(mesa.Model):
             self.stopping_cnt += 1
             if self.stopping_cnt >= self.stopping_threshold:
                 self.running = False
-                self.half_time = self.CalcHalfTime()
+                # self.half_time = self.CalcHalfTime()
         else:
             self.stopping_cnt = 0
             self.happy_prev = self.happy
