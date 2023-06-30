@@ -318,7 +318,7 @@ class Schelling(mesa.Model):
         assert 0 < self.N <= 10, "Number of agents must be between 0 and 10."
         assert round(sum(self.pop_weights), 4) <= 1.0, "Population fractions must add up to 1."
         assert 0 <= self.homophily <= 8, "Tolerance threshold must be between 0 and 8."
-        assert 0 <= self.cluster_threshold <= 100, "Cluster threshold must be between 0 and 100."
+        assert 0 <= self.cluster_threshold <= 1000, "Cluster threshold must be between 0 and 1000."
         assert 0 <= self.alpha <= 1, "Alpha must be between 0 and 1."
         assert self.grid is not None, "Grid was not initialized correctly."
         assert self.schedule is not None, "Schedule was not initialized correctly."
