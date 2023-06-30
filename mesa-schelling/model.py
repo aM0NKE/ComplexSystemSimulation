@@ -128,7 +128,7 @@ class SchellingAgent(mesa.Agent):
             self.model.grid.move_to_empty(self)
         else:
             # Update the model's happy count
-            self.model.happy += 1
+            self.model.total_happy += 1
             
             # Update the model's happy distribution
             self.model.happy_dist[self.type] += 1
@@ -150,7 +150,7 @@ class Schelling(mesa.Model):
 
     def __init__(self, size=100, density=0.9, fixed_areas_pc=0.0, 
                  pop_weights=[0.5, 0.3, 0.2], homophily=4, cluster_threshold=4, 
-                 alpha=0.5, stopping_threshold=5, stats=False, server=False):
+                 alpha=0.95, stopping_threshold=5, stats=False, server=False):
         """ 
         Initialize the Schelling model.
 
@@ -186,7 +186,7 @@ class Schelling(mesa.Model):
         # Set up model statistics (excuse us for the long list of attributes)
         # Note: All these variables were added so that they could be included
         #       in the server visualization of the model.
-        self.happy = 0
+        self.total_happy = 0
         self.happy_dist = {i: 0 for i in range(self.N)}
         self.happy_t0 = 0
         self.happy_t1 = 0
@@ -229,15 +229,14 @@ class Schelling(mesa.Model):
         # Order parameters
         self.percolation_per_pop = {}
         self.percolation_system = 0
-        self.stats = stats 
-        if self.stats: 
-            self.segregation_coefficient = 0.0
-            self.half_time = 0
+        self.stats = stats # Boolean indicating whether to calculate the expensive model statistics or not.
+        self.segregation_coefficient = 0.0
+        self.half_time = 0
 
         # Define datacollector
         self.datacollector = mesa.DataCollector(
             model_reporters={
-                "happy": lambda m: m.happy,
+                "total_happy": lambda m: m.total_happy,
                 "happy_dist": lambda m: m.happy_dist.copy(),
                 "happy_t0": lambda m: m.happy_t0, 
                 "happy_t1": lambda m: m.happy_t1, 
@@ -448,7 +447,7 @@ class Schelling(mesa.Model):
         Resets model statistics.
         """
 
-        self.happy = 0
+        self.total_happy = 0
         self.happy_dist = {i: 0 for i in range(self.N)}
         self.happy_t0 = 0
         self.happy_t1 = 0
@@ -483,13 +482,13 @@ class Schelling(mesa.Model):
         """
 
         # Check if the number of happy agents has increased
-        if self.happy_prev <= self.happy: 
+        if self.happy_prev <= self.total_happy: 
 
             # Reset stopping counter
             self.stopping_cnt = 0
 
             # Update previous number of happy agents
-            self.happy_prev = self.happy
+            self.happy_prev = self.total_happy
         else:
             # Increment stopping counter
             self.stopping_cnt += 1

@@ -3,28 +3,27 @@ import mesa
 from model import Schelling
 
 
+# Define a bunch of functions that return text to be displayed in the GUI
 def happy_stats(model):
-    """
-    Display a text of some general model statistics.
-    """
-    return f"Happy agents: {model.happy}"
-            # , f"\nHappy distribution: {model.happy_dist}"
+    return f"Total happy agents: {model.total_happy}"
 
 def wealth_stats(model):
     return f"\nTotal wealth: {model.total_wealth}"
-            # , f"\nWealth distribution: {model.wealth_dist}"
 
 def cluster_stats(model):
     return f"\nTotal avg. cluster size: {model.total_avg_cluster_size}"
-            # , f"\nCluster size data: {model.cluster_data}"
 
-def percolation_stats(model):
-    return f"\nPercolation data: {model.percolation_data}", f"\nPercolation boolean: {model.boolean_percolation}"
+def percolation_per_pop(model):
+    return f"\nPercolation per population: {model.percolation_per_pop}"
+     
+def percolation_system(model):
+    return f"\nPercolation system: {model.percolation_system}"
      
 def schelling_draw(agent):
     """
     Portrayal Method for canvas
     """
+
     if agent is None:
         return
     
@@ -46,19 +45,18 @@ def schelling_draw(agent):
 # Define model parameters
 model_params = {
     "size": mesa.visualization.Slider("Grid size", 100, 10, 100, 10),
-    "density": mesa.visualization.Slider("Agent density", 0.9, 0.01, 1.0, 0.01),
+    "density": mesa.visualization.Slider("Agent density", 0.9, 0.05, .99, 0.05),
     "homophily": mesa.visualization.Slider("Homophily", 4, 0, 8, 1),
-    "alpha": mesa.visualization.Slider("Alpha", 0.1, 0, .99, 0.01),
-    "cluster_threshold": mesa.visualization.Slider("Cluster size threshold", 4, 1, 100, 1),
-    "stopping_threshold": mesa.visualization.Slider("Stopping threshold", 5, 1, 20, 1),
+    "alpha": mesa.visualization.Slider("Alpha", 0.95, 0.5, 10, 0.1),
+    "cluster_threshold": mesa.visualization.Slider("Cluster size threshold", 5, 1, 100, 5),
+    "stopping_threshold": mesa.visualization.Slider("Stopping threshold", 10, 0, 50, 5),
     "fixed_areas_pc": mesa.visualization.Slider("Fixed area density (Old Idea)", 0.0, 0.0, 0.2, 0.025),
     "server": True,
 }
 
 # Define graphic elements
 canvas_element = mesa.visualization.CanvasGrid(schelling_draw, 100, 100, 1000, 1000)
-happy_chart = mesa.visualization.ChartModule([  {"Label": "happy", "Color": "Black"},
-                                                {"Label": "happy_t0", "Color": "#FF0000"},
+happy_chart = mesa.visualization.ChartModule([  {"Label": "happy_t0", "Color": "#FF0000"},
                                                 {"Label": "happy_t1", "Color": "#00FF00"},
                                                 {"Label": "happy_t2", "Color": "#0000FF"},
                                                 {"Label": "happy_t3", "Color": "#FFA500"},
@@ -69,8 +67,7 @@ happy_chart = mesa.visualization.ChartModule([  {"Label": "happy", "Color": "Bla
                                                 {"Label": "happy_t8", "Color": "#008000"},
                                                 {"Label": "happy_t9", "Color": "#FFC0CB"},
                                             ])
-wealth_chart = mesa.visualization.ChartModule([ {"Label": "total_wealth", "Color": "Black"},
-                                                {"Label": "wealth_t0", "Color": "#FF0000"},
+wealth_chart = mesa.visualization.ChartModule([ {"Label": "wealth_t0", "Color": "#FF0000"},
                                                 {"Label": "wealth_t1", "Color": "#00FF00"},
                                                 {"Label": "wealth_t2", "Color": "#0000FF"},
                                                 {"Label": "wealth_t3", "Color": "#FFA500"},
@@ -97,7 +94,7 @@ cluster_chart = mesa.visualization.ChartModule([{"Label": "total_avg_cluster_siz
 # Create the server, and pass the grid and the graph
 server = mesa.visualization.ModularServer(
     Schelling,
-    [canvas_element, percolation_stats, wealth_stats, wealth_chart, cluster_stats, cluster_chart, happy_stats, happy_chart],
+    [canvas_element, percolation_per_pop, percolation_system, wealth_stats, wealth_chart, cluster_stats, cluster_chart, happy_stats, happy_chart],
     "Schelling",
     model_params,
 )
