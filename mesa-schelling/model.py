@@ -1,7 +1,8 @@
+# Import modules
 import mesa
 import random
 
-
+# Import helper functions
 from helper_functions.segregation_clusters import *
 from helper_functions.wealth_clusters import *
 from helper_functions.percolation import *
@@ -19,7 +20,7 @@ class SchellingAgent(mesa.Agent):
             unique_id: Unique identifier for the agent.
             pos (x, y): Agent initial location.
             model: Model reference. 
-            agent_type: Indicator for the agent's type (minority=1, majority=0)
+            agent_type: Indicator for the agent's type (maximum of 10).
             init_wealth: Initial wealth of the agent.
         """
 
@@ -31,21 +32,27 @@ class SchellingAgent(mesa.Agent):
     def calculate_avg_neighbor_wealth(self, neighbors):
         """
         Calculates the average wealth of the agent's neighbors.
+
+        Args:
+            neighbors: List of the agent's neighbors.
         """
 
+        # Initialize counters
         cnt_neighbors = 0
         wealth_neighbors = 0
 
         # Iterate over all neighbors in moore neighborhood
-        for neighbor in self.model.grid.iter_neighbors(self.pos, True):
+        for neighbor in neighbors:
 
             # Skip fixed objects
             if neighbor.type == -1:
                 continue 
 
+            # Update counters
             cnt_neighbors += 1
             wealth_neighbors += neighbor.wealth
 
+        # Calculate average wealth of neighbors
         avg_neighbor_wealth = wealth_neighbors / cnt_neighbors
         return avg_neighbor_wealth
 
@@ -62,30 +69,22 @@ class SchellingAgent(mesa.Agent):
 
             # Find avg. wealth of agent's neighbors
             avg_neighbor_wealth = self.calculate_avg_neighbor_wealth(neighbors)
-            # print("step", self.model.schedule.steps)
-            # print("self.wealth", self.wealth)
-            # print("avg.", avg_neighbor_wealth)
-
+            
             # Economic rules V2
-            # Else update its wealth according to the average of its neighbors
-            # print("w/anw", self.wealth / avg_neighbor_wealth)
-            # print("a", self.model.alpha)
-            # if (self.wealth / avg_neighbor_wealth) <= 1 - self.model.alpha:
+            # Check if agent's wealth is within the range of its neighbors' wealth
             if (1 - self.model.alpha) <= (self.wealth / avg_neighbor_wealth) <= 1:
                 self.wealth = 0.5 * self.wealth + 0.5 * avg_neighbor_wealth
-                # print("Update")
             else:
                 self.wealth = self.wealth
-                # print("No Update")
 
             # Economic rules V1
+            # Check if agent's wealth is less than the avg. wealth of its neighbors
             # if self.wealth < avg_neighbor_wealth:
             #     self.wealth = 0.5 * self.wealth + 0.5 * avg_neighbor_wealth
 
         # If an agent has no neighbors, keep its wealth
         else:
             self.wealth = self.wealth
-            # print("No neighbors")
         
         # Update the model's total wealth
         self.model.total_wealth += self.wealth
@@ -99,7 +98,7 @@ class SchellingAgent(mesa.Agent):
 
     def is_happy(self):
         """
-        Determine whether the agent is happy or not.
+        Determines whether the agent is happy or not.
         """
 
         # Find the agent's neighbors
@@ -119,7 +118,6 @@ class SchellingAgent(mesa.Agent):
         else:
             return True
 
-
     def move(self):
         """
         If the agent is unhappy, move to a new location.
@@ -129,7 +127,10 @@ class SchellingAgent(mesa.Agent):
         if self.is_happy() == False:
             self.model.grid.move_to_empty(self)
         else:
+            # Update the model's happy count
             self.model.happy += 1
+            
+            # Update the model's happy distribution
             self.model.happy_dist[self.type] += 1
 
             # Update individual happy per agent type attributes for visualiaztion
@@ -147,19 +148,24 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, size=100, density=0.9, fixed_areas_pc=0.0, pop_weights=[0.5, 0.3, 0.2], homophily=4, cluster_threshold=4, alpha=0.5, stopping_threshold=5, server=False):
+    def __init__(self, size=100, density=0.9, fixed_areas_pc=0.0, 
+                 pop_weights=[0.5, 0.3, 0.2], homophily=4, cluster_threshold=4, 
+                 alpha=0.5, stopping_threshold=5, stats=False, server=False):
         """ 
         Initialize the Schelling model.
 
         Args:
-            width, height: The width and height of the grid.
+            size: Size of the grid (size x size).
             density: The proportion of the grid to be occupied by agents.
             fixed_areas_pc: The proportion of the grid to be occupied by fixed areas.
-            N: The number of agent types.
             pop_weights: The proportion of each agent type in the population.
             homophily: The minimum number of similar neighbors an agent needs to be happy.
             cluster_threshold: The minimum number of agents together to count as a cluster.
-            cluster_coefficient: The coefficient that indicates how much segregation occurs.
+            alpha: The parameter to check if agent's wealth is within the range of its neighbors' wealth.
+            stopping_threshold: If the model's happy count does not change by this threshold, stop the model.
+            stats: Boolean indicating whether to calculate the expensive model statistics or not.
+            server: Boolean indicating whether the model is run on a server or not.
+                    Note: This was added to avoid stopping criterion errors when running the model on a server.
         """
 
         # Set parameters
@@ -177,7 +183,9 @@ class Schelling(mesa.Model):
         self.schedule = mesa.time.RandomActivation(self)
         self.grid = mesa.space.SingleGrid(size, size, torus=True)
 
-        # Set up model statistics
+        # Set up model statistics (excuse us for the long list of attributes)
+        # Note: All these variables were added so that they could be included
+        #       in the server visualization of the model.
         self.happy = 0
         self.happy_dist = {i: 0 for i in range(self.N)}
         self.happy_t0 = 0
@@ -205,8 +213,8 @@ class Schelling(mesa.Model):
         self.wealth_t9 = 0
 
         self.total_avg_cluster_size = 0.0
-        self.cluster_sizes = {}
-        self.cluster_data = {}
+        self.cluster_sizes_per_pop = {}
+        self.cluster_summary = {}
         self.cluster_t0 = 0
         self.cluster_t1 = 0
         self.cluster_t2 = 0
@@ -218,16 +226,19 @@ class Schelling(mesa.Model):
         self.cluster_t8 = 0
         self.cluster_t9 = 0
 
-        self.percolation_data = {}
-        self.boolean_percolation = 0
-        self.cluster_coefficient = 0.0
-        self.half_time = 0
+        # Order parameters
+        self.percolation_per_pop = {}
+        self.percolation_system = 0
+        self.stats = stats 
+        if self.stats: 
+            self.segregation_coefficient = 0.0
+            self.half_time = 0
 
         # Define datacollector
         self.datacollector = mesa.DataCollector(
             model_reporters={
-                "happy": lambda m: m.happy, # Model-level count of happy agents
-                "happy_dist": lambda m: m.happy_dist.copy(), # Model-level count of happy agents
+                "happy": lambda m: m.happy,
+                "happy_dist": lambda m: m.happy_dist.copy(),
                 "happy_t0": lambda m: m.happy_t0, 
                 "happy_t1": lambda m: m.happy_t1, 
                 "happy_t2": lambda m: m.happy_t2, 
@@ -238,8 +249,8 @@ class Schelling(mesa.Model):
                 "happy_t7": lambda m: m.happy_t7,
                 "happy_t8": lambda m: m.happy_t8,
                 "happy_t9": lambda m: m.happy_t0,  
-                "total_wealth": lambda m: m.total_wealth, # Model-level count of total wealth
-                "wealth_dist": lambda m: m.wealth_dist.copy(), # Model-level count of total wealth
+                "total_wealth": lambda m: m.total_wealth,
+                "wealth_dist": lambda m: m.wealth_dist.copy(),
                 "wealth_t0": lambda m: m.wealth_t0,
                 "wealth_t1": lambda m: m.wealth_t1,
                 "wealth_t2": lambda m: m.wealth_t2,
@@ -250,9 +261,9 @@ class Schelling(mesa.Model):
                 "wealth_t7": lambda m: m.wealth_t7,
                 "wealth_t8": lambda m: m.wealth_t8,
                 "wealth_t9": lambda m: m.wealth_t9,
-                "total_avg_cluster_size": lambda m: m.total_avg_cluster_size,  # Model-level total average cluster size
-                "cluster_sizes": lambda m: m.cluster_sizes.copy(), # Dictonary of cluster sizes
-                "cluster_data": lambda m: m.cluster_data.copy(), # Dictonary of cluster data
+                "total_avg_cluster_size": lambda m: m.total_avg_cluster_size,
+                "cluster_sizes_per_pop": lambda m: m.cluster_sizes_per_pop.copy(),
+                "cluster_summary": lambda m: m.cluster_summary.copy(),
                 "cluster_t0": lambda m: m.cluster_t0,
                 "cluster_t1": lambda m: m.cluster_t1,
                 "cluster_t2": lambda m: m.cluster_t2,
@@ -263,9 +274,10 @@ class Schelling(mesa.Model):
                 "cluster_t7": lambda m: m.cluster_t7,
                 "cluster_t8": lambda m: m.cluster_t8,
                 "cluster_t9": lambda m: m.cluster_t9,
-
-                "percolation_data": lambda m: m.percolation_data.copy(), # Dictonary of percolation data
-                "boolean_percolation": "boolean_percolation", # Model-level boolean value if a cluster percolates
+                "percolation_per_pop": lambda m: m.percolation_per_pop.copy(), 
+                "percolation_system": lambda m: m.percolation_system, 
+                "segregation_coefficient": lambda m: m.segregation_coefficient,
+                "half_time": lambda m: m.half_time, 
             },
             agent_reporters={
                 # For testing purposes, agent's individual x and y
@@ -279,6 +291,8 @@ class Schelling(mesa.Model):
         self.running = True
         self.stopping_cnt = 0
         self.happy_prev = 0
+
+        # Parameter added to prevent stopping error when running model on server.
         self.server = server
 
         # Add fixed cells
@@ -289,9 +303,26 @@ class Schelling(mesa.Model):
         # Set up agents
         self.setup_agents()
 
+        # Check if the model has been initialized correctly
+        self.check_initialization()
+
+    def check_initialization(self):
+        """
+        Checks if the model has been initialized correctly.
+        """
+
+        assert self.N > 0, "Number of agents must be greater than 0."
+        assert self.grid.width > 0, "Width must be greater than 0."
+        assert self.grid.height > 0, "Height must be greater than 0."
+        assert len(self.pop_weights) == self.N, "Number of population fractions must match the number of populations."
+        assert round(sum(self.pop_weights), 4) <= 1.0, "Population fractions must add up to 1."
+        assert self.homophily >= 0, "Tolerance threshold must be greater than or equal to 0."
+        assert self.homophily <= 8, "Tolerance threshold must be less than or equal to 8."
+
     def add_fixed_cells(self, fixed_areas_pc):
         """
-        Adds fixed cells to the grid by randomly creating clusters of fixed cells and placing them on the grid.
+        Adds fixed cells to the grid by randomly creating clusters 
+        of fixed cells and placing them on the grid.
 
         Args:
             fixed_areas_pc: Proportion of fixed cells in the grid.
@@ -299,16 +330,18 @@ class Schelling(mesa.Model):
         Note: Fixed cells are represented as an agent of type -1.
         """
 
+        # Calculate the number of fixed cells to add to the grif
         num_fixed_cells = int(fixed_areas_pc * self.size * self.size)
 
         # Generate clusters of fixed cells
         cluster_centers = self.generate_cluster_centers(num_fixed_cells)
-
         for center in cluster_centers:
+            
             # Generate a cluster of fixed cells around the center
             cluster = self.generate_cluster(center)
-
             for cell in cluster:
+            
+                # Skip if the cell is already occupied
                 if cell in [agent.pos for agent in self.fixed_cells]:
                     continue
 
@@ -321,7 +354,7 @@ class Schelling(mesa.Model):
 
     def generate_cluster_centers(self, num_centers):
         """
-        Generates random cluster centers.
+        Helper function that generates random cluster centers.
 
         Args:
             num_centers: Number of cluster centers to generate.
@@ -339,7 +372,8 @@ class Schelling(mesa.Model):
 
     def generate_cluster(self, center):
         """
-        Generates a cluster of cells around the specified center.
+        Helper function that generates a cluster of cells around 
+        the specified center.
 
         Args:
             center: Center coordinates of the cluster.
@@ -363,23 +397,6 @@ class Schelling(mesa.Model):
               its contents. (coord_iter)
         """
         
-        # Check if population fractions are provided
-        if self.pop_weights is None:
-            raise ValueError("Population fractions must be specified.")
-
-        # Check if the number of population fractions matches the number of populations
-        if len(self.pop_weights) != self.N:
-            raise ValueError("Number of population fractions must match the number of populations.")
-        
-        # Check if population fractions add up to 1
-        if round(sum(self.pop_weights), 4) != 1.0:
-            raise ValueError("The population fractions do not add up to 1")
-        
-        # Loop over the population fractions and validate the values
-        for weight in self.pop_weights:
-            if weight < 0 or weight > 1:
-                raise ValueError("Population fractions must be between 0 and 1.")
-
         # Loop over each cell in the grid
         for cell in self.grid.coord_iter():
             x = cell[1]
@@ -391,32 +408,40 @@ class Schelling(mesa.Model):
             
             # Place an agent based on the density
             if self.random.random() < self.density:
-                # Determine if the agent is a minority
-                agent_type = self.random.choices(
-                    population=range(self.N),
-                    weights=self.pop_weights)[0]
 
+                # Determine the agent's type based on the population fractions
+                agent_type = self.random.choices(population=range(self.N),
+                                                 weights=self.pop_weights)[0]
+
+                # Determine the agent's initial wealth
+                # Note: Lognormal distribution with mean 1.0 and std 1.5 (USA)
+                init_wealth = np.random.lognormal(1.0, 1.5)
+               
                 # Create a new agent
-                init_wealth = np.random.lognormal(1.0, 1.5) # Lognormal distribution with mean 3 and std 1 (USA)
                 agent = SchellingAgent((x, y), self, agent_type, init_wealth)
+                
                 # Add the agent to the grid
                 self.grid.place_agent(agent, (x, y))
+                
                 # Add the agent to the scheduler
                 self.schedule.add(agent)
 
     def calculate_model_stats(self):
         """
-        Calculates the number of clusters, mean cluster size and standard deviation
-        for each population group. As well as the total average cluster size and 
-        it returns the indivisual cluster sizes.
+        Calculates a number of model statistics, such as:
+            - All cluster sizes per population
+            - Average cluster size per population
+            - Total average cluster size
+            - Percolation status per population
+            - Percolation status of system
         """
+
         array = grid2numpy(self)
-        self.cluster_sizes = find_cluster_sizes(self, array)
-        self.cluster_data = cluster_summary(self, self.cluster_sizes)
-        self.total_avg_cluster_size = np.average([np.mean(self.cluster_sizes[value]) if len(self.cluster_sizes[value]) > 0 else 0.0 for value in self.cluster_sizes.keys()], weights = self.pop_weights)
-        self.percolation_data = percolation_detector(self, array)
-        self.boolean_percolation = any([any(self.percolation_data[value]) for value in self.percolation_data.keys()])
-        self.cluster_coefficient = WeightedAveragepopweights(self, self.cluster_sizes)
+        self.cluster_sizes_per_pop = find_cluster_sizes(self, array)
+        self.cluster_summary = cluster_summary(self, self.cluster_sizes_per_pop)
+        self.total_avg_cluster_size = np.average([np.mean(self.cluster_sizes_per_pop[value]) if len(self.cluster_sizes_per_pop[value]) > 0 else 0.0 for value in self.cluster_sizes_per_pop.keys()], weights = self.pop_weights)
+        self.percolation_per_pop = percolation_detector(self, array)
+        self.percolation_system = any([any(self.percolation_per_pop[value]) for value in self.percolation_per_pop.keys()])
 
     def reset_model_stats(self):
         """
@@ -457,21 +482,39 @@ class Schelling(mesa.Model):
         from previous step for a number of steps equal to the stopping threshold. 
         """
 
-        if self.happy_prev >= self.happy: 
-            self.stopping_cnt += 1
-            if self.stopping_cnt >= self.stopping_threshold:
-                self.running = False
-                self.half_time = CalcHalfTime(self)
-        else:
+        # Check if the number of happy agents has increased
+        if self.happy_prev <= self.happy: 
+
+            # Reset stopping counter
             self.stopping_cnt = 0
+
+            # Update previous number of happy agents
             self.happy_prev = self.happy
+        else:
+            # Increment stopping counter
+            self.stopping_cnt += 1
+
+            # Check if the stopping threshold has been reached
+            if self.stopping_cnt >= self.stopping_threshold:
+
+                # Halt the model
+                self.running = False
+
+                # If statistics are enabled, calculate the cluster coefficient and half time (computationally expensive)
+                if self.stats: 
+                    # Segregation coefficient of system
+                    self.segregation_coefficient = WeightedAveragepopweights(self, self.cluster_sizes_per_pop)
+                    # Wealth segregation coefficient of system
+                    self.half_time = CalcHalfTime(self)
         
     def step(self):
         """
         Run one step of the model. If All agents are happy, halt the model.s
         """
 
+        # Check if the model is running on a server
         if self.server == True:
+
             # Reset model statistics
             self.reset_model_stats()
 
@@ -484,9 +527,11 @@ class Schelling(mesa.Model):
 
             # Check stopping condition
             self.stopping_condition()
-                
+
+        # Check if the model is running on a local machine    
         else:
             while self.running == True:
+
                 # Reset model statistics
                 self.reset_model_stats()
 
