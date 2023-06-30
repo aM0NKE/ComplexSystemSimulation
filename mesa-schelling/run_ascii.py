@@ -16,7 +16,7 @@ class SchellingTextVisualization(mesa.visualization.TextVisualization):
 
         grid_viz = mesa.visualization.TextGrid(self.model.grid, self.print_ascii_agent)
         self.elements = [grid_viz]
-        
+
     @staticmethod
     def print_ascii_agent(a):
         """
@@ -35,12 +35,12 @@ if __name__ == "__main__":
         "density": 0.8,
         "fixed_areas_pc": 0.0,
         "pop_weights":[0.8, 0.2],
-        "homophily": 4,
-        "cluster_threshold": 2,
+        "homophily": 0,
+        "cluster_threshold": 0,
         "alpha": .95,
         "stopping_threshold": 5,
         'stats': False,
-        "server": False
+        "server": True
     }
 
     model = Schelling(**model_params)

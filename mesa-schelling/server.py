@@ -14,7 +14,7 @@ def cluster_stats(model):
     return f"\nTotal avg. cluster size: {model.total_avg_cluster_size}"
 
 def percolation_per_pop(model):
-    return f"\nPercolation per population: {model.percolation_per_pop}"
+    return f"\nPercolation per population [vertical, horizontal]: {model.percolation_per_pop}"
      
 def percolation_system(model):
     return f"\nPercolation system: {model.percolation_system}"
@@ -48,7 +48,7 @@ model_params = {
     "density": mesa.visualization.Slider("Agent density", 0.9, 0.05, .99, 0.05),
     "homophily": mesa.visualization.Slider("Homophily", 4, 0, 8, 1),
     "alpha": mesa.visualization.Slider("Alpha", 0.95, 0.5, 10, 0.1),
-    "cluster_threshold": mesa.visualization.Slider("Cluster size threshold", 5, 1, 100, 5),
+    "cluster_threshold": mesa.visualization.Slider("Cluster size threshold", 5, 4, 100, 5),
     "stopping_threshold": mesa.visualization.Slider("Stopping threshold", 10, 0, 50, 5),
     "fixed_areas_pc": mesa.visualization.Slider("Fixed area density (Old Idea)", 0.0, 0.0, 0.2, 0.025),
     "server": True,

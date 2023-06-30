@@ -309,15 +309,22 @@ class Schelling(mesa.Model):
         """
         Checks if the model has been initialized correctly.
         """
-
-        assert self.N > 0, "Number of agents must be greater than 0."
-        assert self.grid.width > 0, "Width must be greater than 0."
-        assert self.grid.height > 0, "Height must be greater than 0."
-        assert len(self.pop_weights) == self.N, "Number of population fractions must match the number of populations."
+        
+        assert 0 < self.size <= 200, "Grid size must be between 0 and 200."
+        assert 0 < self.grid.width <= 200, "Grid was not initialized correctly."
+        assert 0 < self.grid.height <= 200, "Grid was not initialized correctly."
+        assert 0 < self.density < 1, "Density must be between 0 and 1."
+        assert 0 <= self.fixed_areas_pc <= 0.5, "Proportion of fixed areas must be between 0 and 0.5."
+        assert 0 < self.N <= 10, "Number of agents must be between 0 and 10."
         assert round(sum(self.pop_weights), 4) <= 1.0, "Population fractions must add up to 1."
-        assert self.homophily >= 0, "Tolerance threshold must be greater than or equal to 0."
-        assert self.homophily <= 8, "Tolerance threshold must be less than or equal to 8."
-
+        assert 0 <= self.homophily <= 8, "Tolerance threshold must be between 0 and 8."
+        assert 0 <= self.cluster_threshold <= 100, "Cluster threshold must be between 0 and 100."
+        assert 0 <= self.alpha <= 1, "Alpha must be between 0 and 1."
+        assert self.grid is not None, "Grid was not initialized correctly."
+        assert self.schedule is not None, "Schedule was not initialized correctly."
+        assert self.datacollector is not None, "Datacollector was not initialized correctly."
+        assert self.running is True, "Model was not initialized correctly."
+        
     def add_fixed_cells(self, fixed_areas_pc):
         """
         Adds fixed cells to the grid by randomly creating clusters 
