@@ -35,17 +35,17 @@ if __name__ == "__main__":
         "density": 0.8,
         "fixed_areas_pc": 0.0,
         "pop_weights":[0.8, 0.2],
-        "homophily": 0,
+        "homophily": 5,
         "cluster_threshold": 0,
         "alpha": .95,
         "stopping_threshold": 5,
-        'stats': False,
+        'stats': True,
         "server": True
     }
 
     model = Schelling(**model_params)
     viz = SchellingTextVisualization(model)
-    for i in range(10):
+    for i in range(50):
         print("Step:", i)
         viz.step()
         print("---")
