@@ -1,7 +1,10 @@
 import mesa
 import random
-import numpy as np
-import scipy as sp
+
+
+from helper_functions.segregation_clusters import *
+from helper_functions.wealth_clusters import *
+from helper_functions.percolation import *
 
 class SchellingAgent(mesa.Agent):
     """
@@ -144,7 +147,7 @@ class Schelling(mesa.Model):
     Model class for the Schelling segregation model.
     """
 
-    def __init__(self, size=100, density=0.9, fixed_areas_pc=0.0, pop_weights=[0.5, 0.5], homophily=4, cluster_threshold=4, alpha=0.5, stopping_threshold=5, server=False):
+    def __init__(self, size=100, density=0.9, fixed_areas_pc=0.0, pop_weights=[0.5, 0.3, 0.2], homophily=4, cluster_threshold=4, alpha=0.5, stopping_threshold=5, server=False):
         """ 
         Initialize the Schelling model.
 
@@ -401,159 +404,19 @@ class Schelling(mesa.Model):
                 # Add the agent to the scheduler
                 self.schedule.add(agent)
 
-    def grid2numpy(self):
-        """
-        This function converts the grid to a numpy array.
-        """
-
-        array = -1 * np.ones((self.grid.width, self.grid.height), dtype=int)
-
-        for cell in self.grid.coord_iter():
-            _, x, y = cell
-            if len(self.grid.get_cell_list_contents((x, y))) != 0:
-                agent = self.grid.get_cell_list_contents((x, y))[0]  # Assuming only one agent per cell
-                array[x, y] = agent.type
-        return array
-    
-    def cluster_finder(self, mask):
-        """
-        This helper function has as imput a binary matrix of one population group
-        and returns the size of cluster(s).
-
-        Args:
-            mask (2D numpy array): Matrix of intergers where 0 is not part of a cluster
-            and 1 is part of a cluster.
-
-        Returns:
-            cluster: an array of clusters sizes for a input population group (mask)
-        """
-
-        # Labels the clusters
-        lw, _ = sp.ndimage.label(mask)
-        
-        # sums the agents that are part of a cluster
-        clusters = sp.ndimage.sum(mask, lw, index=np.arange(lw.max() + 1))
-        return clusters[clusters >= self.cluster_threshold]
-
-    def find_cluster_sizes(self, array):
-        """
-        This function finds all the cluster size(s) for all the populations on the 2D grid.
-
-        Args:
-            array (2D numpy array): Matrix of intergers where 0 is the empty space
-                                    and the other intergers a population agent.
-
-        Returns:
-            cluster_sizes (dictonary): The keys are the population value (population group)
-                                    and the values is an array of cluster size(s).
-        """
-
-        unique_values = np.unique(array)
-        cluster_sizes = {}
-
-        for value in unique_values:
-            # value 0 is an empty space thus not part of the cluster.
-            if value >= 0:
-                # Isolate the selected population group form the rest (makt it a binary matrix)
-                mask = array == value
-                # find the cluster size(s) for the selected population group.
-                cluster_sizes[value] = self.cluster_finder(mask)
-        return cluster_sizes
-
-    def cluster_summary(self, cluster_sizes):
-        """
-        This function calculates the number of clusters, mean cluster size 
-        with standard deviation.
-
-        Args:
-            cluster_sizes (dictonary): The keys are the population value (population group)
-                                    and the values is an array of cluster size(s).
-
-        Returns:
-            cluster_data (dictonary): The keys are the population value (population group)
-                                    and the values is an array of number of clusters,
-                                    mean cluster size and standard deviation.
-        """
-
-        cluster_data = {}
-        for value in cluster_sizes.keys():
-            if len(cluster_sizes[value]) != 0:
-                cluster_data[value] = [len(cluster_sizes[value]), np.mean(cluster_sizes[value]),
-                                        np.std(cluster_sizes[value])]
-            else:
-                cluster_data[value] = [0, 0, 0]
-
-            # Update individual cluster sizes per agent type attributes for visualiaztion
-            var_key = f'cluster_t{value}'
-            setattr(self, var_key, cluster_data[value][1])
-        return cluster_data
-    
-    def percolation_detector(self, array):
-        """This function checks if a population group contains a cluster that percolates,
-            either vertically, horizontally or both.
-
-        Args:
-            array (2D numpy array): Matrix of intergers where 0 is the empty space
-                                    and the other intergers a population agent.
-
-        Returns:
-            percolation_check (dictonary): The keys are the population value (population group)
-                                        and the values is an array of boolian values. 
-                                        The first vertical percolation and the second horizontal.
-        """
-        # Get the number of populations
-        unique_values = np.unique(array)
-        percolation_check = {}
-
-        # Loop through each population group and determines the cluster(s) and their sizes.
-        for value in unique_values:
-            if value >= 0:
-                mask = array == value
-                labels, num_clusters = sp.ndimage.label(mask)
-                clusters = sp.ndimage.sum(mask, labels, index=np.arange(labels.max() + 1))
-                percolates_vertically = False
-                percolates_horizontally = False
-
-                # Loop through each cluster of a single poplulation group and check if it percolates
-                # If the cluster is not big enough to percolate or if a previous cluster already percolated the check is skipped.
-                for label in range(1,num_clusters+1):
-                    if percolates_vertically == False and clusters[label] >= mask.shape[0]:
-                        if label in labels[:,0] and label in labels[:,-1]:
-                            percolates_vertically = True
-                    
-                    if percolates_horizontally == False  and clusters[label] >= mask.shape[1]:
-                        if label in labels[0,:] and label in labels[-1,:]:
-                            percolates_horizontally = True
-
-                percolation_check[value] = [percolates_vertically, percolates_horizontally]
-
-        return percolation_check
-    
-    def WeightedAveragepopweights(self, cluster_sizes):
-        S = 0
-        
-        for i in cluster_sizes:
-            a = 0
-            for j in range(len(cluster_sizes[i])):
-                a += cluster_sizes[i][j]**2
-            
-            S += (1/(self.grid.width*self.grid.height*self.pop_weights[i])**2)*a
-        
-        return S/self.N 
-    
-    def calculate_cluster_stats(self):
+    def calculate_model_stats(self):
         """
         Calculates the number of clusters, mean cluster size and standard deviation
         for each population group. As well as the total average cluster size and 
         it returns the indivisual cluster sizes.
         """
-        array = self.grid2numpy()
-        self.cluster_sizes = self.find_cluster_sizes(array)
-        self.cluster_data = self.cluster_summary(self.cluster_sizes)
+        array = grid2numpy(self)
+        self.cluster_sizes = find_cluster_sizes(self, array)
+        self.cluster_data = cluster_summary(self, self.cluster_sizes)
         self.total_avg_cluster_size = np.average([np.mean(self.cluster_sizes[value]) if len(self.cluster_sizes[value]) > 0 else 0.0 for value in self.cluster_sizes.keys()], weights = self.pop_weights)
-        self.percolation_data = self.percolation_detector(array)
+        self.percolation_data = percolation_detector(self, array)
         self.boolean_percolation = any([any(self.percolation_data[value]) for value in self.percolation_data.keys()])
-        self.cluster_coefficient = self.WeightedAveragepopweights(self.cluster_sizes)
+        self.cluster_coefficient = WeightedAveragepopweights(self, self.cluster_sizes)
 
     def reset_model_stats(self):
         """
@@ -586,93 +449,6 @@ class Schelling(mesa.Model):
         self.wealth_t8 = 0
         self.wealth_t9 = 0
 
-
-    def WealthOnGrid(self):
-        """
-        Function that takes the model as input and finds the wealth of the agents at different points in the grid and puts that 
-        into a numpy array. The wealth is then also plotted in a heatmap and returns the array with the wealths.
-        """
-        wealth_on_grid = np.zeros((self.grid.width, self.grid.height))
-
-        for cell in self.grid.coord_iter():
-            cell_content, x, y = cell
-            if cell_content:
-                wealth_on_grid[x][y] = cell_content.wealth
-        
-        return wealth_on_grid
-    
-    def WealthSegregation(self, x, y):
-        """
-        Function that takes as input the model, the array with wealths per grid location and an x and y integer. This function 
-        calculates the variance of a growing square in the grid, with starting location (x,y). It returns an array with the variance
-        per square side size.
-        """
-        # Initial values
-        wealth_on_grid = self.WealthOnGrid()
-        N = self.grid.width
-        var_list = []
-        L_list = []
-
-        for L in range(1, N):
-            
-            # Determine the coordinates of the square based on the initial coordinate and L
-            start_row = x - (L // 2)
-            end_row = start_row + L
-            start_col = y - (L // 2)
-            end_col = start_col + L
-
-            # Adjust the coordinates if they exceed the array boundaries
-            if end_row > N:
-                start_row -= end_row - N
-                end_row = N
-            if end_col > N:
-                start_col -= end_col - N
-                end_col = N
-            if start_row < 0:
-                end_row -= start_row
-                start_row = 0
-            if start_col < 0:
-                end_col -= start_col
-                start_col = 0
-
-            # Calculate the variance of wealth in the square
-            var = np.var(wealth_on_grid[start_row:end_row, start_col:end_col])
-
-            # Append variance to list
-            var_list.append(var)
-            L_list.append(L)
-            
-        # Delete the first element of both lists (zero variance for square of 1x1)
-        var_list.pop(0)
-        L_list.pop(0)    
-        
-        return var_list
-    
-    def WealthSegregationAverage(self):
-        """
-        Fuction that finds the average variance for different square sizes L over all possible starting coordinates (x,y).
-        """
-        var = np.zeros(self.grid.width-2)
-
-        # Fiding the variances for all starting coordinates and summing them together
-        for x in range(0, self.grid.width):
-            for y in range(0, self.grid.height):
-                var_list = self.WealthSegregation(x, y)
-                var += var_list
-
-        # Calculating the average
-        average_vars = var/self.grid.width
-        L = np.array(range(1, self.grid.width-1))
-
-
-        return average_vars, L
-    
-    def CalcHalfTime(self):
-        average_vars, L = self.WealthSegregationAverage()
-        end_value = average_vars[len(average_vars)-1] # The last value of the variance
-        half_time = np.interp(0.5 * end_value, average_vars, L) # Interpolating the half time
-        return half_time
-
     def stopping_condition(self):
         """
         Check if the model should stop running.
@@ -685,14 +461,14 @@ class Schelling(mesa.Model):
             self.stopping_cnt += 1
             if self.stopping_cnt >= self.stopping_threshold:
                 self.running = False
-                self.half_time = self.CalcHalfTime()
+                self.half_time = CalcHalfTime(self)
         else:
             self.stopping_cnt = 0
             self.happy_prev = self.happy
         
     def step(self):
         """
-        Run one step of the model. If All agents are happy, halt the model.
+        Run one step of the model. If All agents are happy, halt the model.s
         """
 
         if self.server == True:
@@ -703,7 +479,7 @@ class Schelling(mesa.Model):
             self.schedule.step()
 
             # Collect data
-            self.calculate_cluster_stats()
+            self.calculate_model_stats()
             self.datacollector.collect(self)
 
             # Check stopping condition
@@ -718,7 +494,7 @@ class Schelling(mesa.Model):
                 self.schedule.step()
 
                 # Collect data
-                self.calculate_cluster_stats()
+                self.calculate_model_stats()
                 self.datacollector.collect(self)
 
                 # Check stopping condition
