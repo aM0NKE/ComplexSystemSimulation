@@ -289,7 +289,7 @@ class Schelling(mesa.Model):
         # Variable to halt model
         self.running = True
         self.stopping_cnt = 0
-        self.happy_prev = 0
+        self.happy_max = 0
 
         # Parameter added to prevent stopping error when running model on server.
         self.server = server
@@ -489,20 +489,18 @@ class Schelling(mesa.Model):
         """
 
         # Check if the number of happy agents has increased
-        if self.happy_prev <= self.total_happy: 
-
+        if self.total_happy > self.happy_max:
+            # Update previous number of happy agents
+            self.happy_max = self.total_happy
             # Reset stopping counter
             self.stopping_cnt = 0
-
-            # Update previous number of happy agents
-            self.happy_prev = self.total_happy
+            
         else:
             # Increment stopping counter
             self.stopping_cnt += 1
 
             # Check if the stopping threshold has been reached
             if self.stopping_cnt >= self.stopping_threshold:
-
                 # Halt the model
                 self.running = False
 
