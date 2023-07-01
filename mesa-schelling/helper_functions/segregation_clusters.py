@@ -25,7 +25,7 @@ def WeightedAveragepopweights(self, cluster_sizes_per_pop):
         # Calculate the weighted average of the cluster sizes
         S += (1 / (self.grid.width * self.grid.height * self.pop_weights[i])**2) * a
     
-    return S / self.N 
+    return S / self.N
 
 def grid2numpy(self):
     """
