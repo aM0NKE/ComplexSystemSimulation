@@ -320,10 +320,11 @@ class Schelling(mesa.Model):
         assert 0 <= self.homophily <= 8, "Tolerance threshold must be between 0 and 8."
         assert 0 <= self.cluster_threshold <= 1000, "Cluster threshold must be between 0 and 1000."
         assert 0 <= self.alpha <= 1, "Alpha must be between 0 and 1."
-        assert self.grid is not None, "Grid was not initialized correctly."
-        assert self.schedule is not None, "Schedule was not initialized correctly."
-        assert self.datacollector is not None, "Datacollector was not initialized correctly."
-        assert self.running is True, "Model was not initialized correctly."
+        assert self.grid is not None, "Grid was not initialized correctly, please try again."
+        assert self.schedule is not None, "Schedule was not initialized correctly, please try again."
+        assert self.datacollector is not None, "Datacollector was not initialized correctly, please try again."
+        assert self.running is True, "Model was not initialized correctly, please try again."
+        assert len(self.schedule.agents) != self.size * self.size, "No empty cells in the grid, please try again."
         
     def add_fixed_cells(self, fixed_areas_pc):
         """
