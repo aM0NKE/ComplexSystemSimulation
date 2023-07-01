@@ -14,8 +14,9 @@ Segregation between different population groups is modelled by Schelling’s seg
 - Sub RQ4: *Is wealth clustering correlated to segregation clustering?*
 - Sub RQ5: *What is the **critical population density** where percolation happens?* 
 - Sub RQ6: *What is the **critical tolerance threshold** where percolation happens?*
-- Sub RQ7: *What is the effect of alpha and homophily on the halftime?*
-- Sub RQ8: *What is the effect of alpha and agent density on the halftime?*
+- Sub-RQ7: *What is the **critical alpha** where wealth clustering happens?* 
+- Sub RQ8: *What is the effect of alpha and homophily on the halftime?*
+- Sub RQ9: *What is the effect of alpha and agent density on the halftime?*
 
 ## Hypotheses
 
